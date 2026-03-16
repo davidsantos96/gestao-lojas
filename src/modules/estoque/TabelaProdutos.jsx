@@ -8,7 +8,7 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { SkeletonTable } from '../../components/ui/Skeleton'
 import { ErrorState } from '../../components/ui/ErrorState'
 
-const COLUNAS = ['SKU', 'Produto', 'Categoria', 'Estoque', 'Mínimo', 'Custo', 'Preço', 'Status', '']
+const COLUNAS = ['Código', 'Produto', 'Categoria', 'Estoque', 'Mínimo', 'Custo', 'Preço', 'Status', '']
 
 export function TabelaProdutos({ produtos, loading, error, onRefetch, onEditar, onRemover }) {
   if (loading) return <Card><SkeletonTable rows={6} cols={9} /></Card>

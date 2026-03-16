@@ -37,7 +37,7 @@ export function ModalProduto({ produto, onClose, onSubmit }) {
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }))
 
   const validate = () => {
-    if (!form.sku.trim())   return 'SKU é obrigatório.'
+    if (!form.sku.trim())   return 'Código é obrigatório.'
     if (!form.nome.trim())  return 'Nome é obrigatório.'
     if (!form.categoria)    return 'Selecione uma categoria.'
     if (!form.preco)        return 'Preço de venda é obrigatório.'
@@ -83,10 +83,10 @@ export function ModalProduto({ produto, onClose, onSubmit }) {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* SKU + Nome */}
+          {/* Código + Nome */}
           <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 12 }}>
             <div>
-              <label style={labelStyle}>SKU</label>
+              <label style={labelStyle}>Código</label>
               <input value={form.sku} onChange={e => set('sku', e.target.value.toUpperCase())} disabled={loading || isEdit} placeholder="CAM-001" style={{ ...inputStyle, opacity: isEdit ? .6 : 1 }} />
             </div>
             <div>

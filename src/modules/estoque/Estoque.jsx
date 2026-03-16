@@ -104,7 +104,7 @@ export function Estoque() {
         {loadProd
           ? Array.from({ length: 4 }).map((_, i) => <SkeletonKPI key={i} />)
           : <>
-              <KPI label="Total SKUs"    value={resumo.totalSkus}          sub="produtos ativos"  color={C.blue}   icon={Package}       />
+              <KPI label="Total Códigos"    value={resumo.totalSkus}          sub="produtos ativos"  color={C.blue}   icon={Package}       />
               <KPI label="Unidades"      value={resumo.totalUnidades}       sub="em estoque"       color={C.accent} icon={Boxes}         />
               <KPI label="Valor Estoque" value={fmtBRL(resumo.valorTotal)} sub="pelo custo"       color={C.yellow} icon={DollarSign}    />
               <KPI label="Alertas"       value={resumo.alertas}             sub="precisam atenção" color={C.red}    icon={AlertTriangle} />
@@ -136,7 +136,7 @@ export function Estoque() {
               <input
                 value={busca}
                 onChange={e => setBusca(e.target.value)}
-                placeholder="Buscar por nome, SKU ou categoria..."
+                placeholder="Buscar por nome, código ou categoria..."
                 style={{ width: '100%', padding: '9px 12px 9px 34px', background: C.s2, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 13, outline: 'none' }}
               />
             </div>
