@@ -1,0 +1,120 @@
+import { useState } from 'react'
+import { X, Loader2 } from 'lucide-react'
+import { C } from '../../constants/theme'
+
+const CATEGORIAS_DESPESA = ['Fornecedor', 'Aluguel', 'Utilities', 'RH', 'Marketing', 'Outro']
+const CATEGORIAS_RECEITA = ['Venda Balcão', 'Venda Online', 'Atacado', 'Outro']
+
+const INITIAL = { tipo: 'despesa', descricao: '', valor: '', data: '', categoria: '' }
+
+export function ModalLancamento({ onClose, onSubmit }) {
+  const [form,    setForm]    = useState(INITIAL)
+  const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState(null)
+
+  const set = (field, value) => setForm(f => ({ ...f, [field]: value }))
+
+  const categorias = form.tipo === 'receita' ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA
+
+  const handleSubmit = async () => {
+    if (!form.descricao || !form.valor || !form.data) {
+      setError('Preencha Descrição, Valor e Data.')
+      return
+    }
+    setLoading(true)
+    setError(null)
+    try {
+      await onSubmit?.({ ...form, valor: parseFloat(form.valor) })
+      onClose()
+    } catch (err) {
+      setError(err?.message || 'Erro ao registrar lançamento.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const inputStyle = {
+    width: '100%', padding: '10px 12px', background: C.s2,
+    border: `1px solid ${C.border}`, borderRadius: 8,
+    color: C.text, fontSize: 13, outline: 'none',
+  }
+  const labelStyle = {
+    fontSize: 11, color: C.muted, fontFamily: 'monospace',
+    letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 6,
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: 32, width: 480, position: 'relative' }}>
+        <button onClick={onClose} disabled={loading} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', cursor: 'pointer' }}>
+          <X size={18} color={C.muted} />
+        </button>
+
+        <div style={{ fontSize: 11, color: C.blue, fontFamily: 'monospace', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 8 }}>Financeiro</div>
+        <h3 style={{ fontSize: 18, fontWeight: 700, color: C.text, marginBottom: 24 }}>Novo Lançamento</h3>
+
+        {/* Tipo toggle */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20, padding: 4, background: C.s2, borderRadius: 10, border: `1px solid ${C.border}` }}>
+          {['despesa', 'receita'].map(t => (
+            <button key={t} onClick={() => set('tipo', t)} style={{
+              flex: 1, padding: '8px 0', borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+              background: form.tipo === t ? (t === 'receita' ? 'rgba(0,217,168,.15)' : 'rgba(255,91,107,.15)') : 'transparent',
+              color: form.tipo === t ? (t === 'receita' ? C.accent : C.red) : C.muted,
+              transition: 'all .15s',
+            }}>
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label style={labelStyle}>Descrição</label>
+            <input value={form.descricao} onChange={e => set('descricao', e.target.value)} disabled={loading} style={inputStyle} placeholder="Ex: Fornecedor Têxtil Alfa" />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={labelStyle}>Valor (R$)</label>
+              <input type="number" min="0" step="0.01" value={form.valor} onChange={e => set('valor', e.target.value)} disabled={loading} style={inputStyle} placeholder="0,00" />
+            </div>
+            <div>
+              <label style={labelStyle}>Vencimento</label>
+              <input type="date" value={form.data} onChange={e => set('data', e.target.value)} disabled={loading} style={{ ...inputStyle, colorScheme: 'dark' }} />
+            </div>
+          </div>
+
+          <div>
+            <label style={labelStyle}>Categoria</label>
+            <select value={form.categoria} onChange={e => set('categoria', e.target.value)} disabled={loading} style={inputStyle}>
+              <option value="">Selecione...</option>
+              {categorias.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+
+          {error && (
+            <div style={{ fontSize: 12, color: C.red, background: 'rgba(255,91,107,.08)', border: `1px solid rgba(255,91,107,.25)`, borderRadius: 8, padding: '8px 12px' }}>
+              {error}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+            <button onClick={onClose} disabled={loading} style={{ flex: 1, padding: 11, borderRadius: 8, border: `1px solid ${C.border}`, background: 'none', color: C.muted, fontSize: 13, cursor: 'pointer' }}>
+              Cancelar
+            </button>
+            <button onClick={handleSubmit} disabled={loading} style={{
+              flex: 1, padding: 11, borderRadius: 8, border: 'none',
+              background: loading ? C.blueD : C.blue,
+              color: '#fff', fontWeight: 700, fontSize: 13,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}>
+              {loading ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Registrando...</> : 'Registrar'}
+            </button>
+          </div>
+        </div>
+      </div>
+      <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
+    </div>
+  )
+}

@@ -1,27 +1,52 @@
 import { useState } from 'react'
-import { Plus, ArrowUpRight, ArrowDownRight, DollarSign, AlertTriangle } from 'lucide-react'
+import { Plus, ArrowUpRight, ArrowDownRight, DollarSign, AlertTriangle, RefreshCw } from 'lucide-react'
 import { C } from '../../constants/theme'
-import { contasPagar } from '../../data/mock'
 import { fmtBRL } from '../../utils/format'
+import { useCashflow, useContasPagar, useContasReceber, useDRE, useLancamento } from '../../hooks/useFinanceiro'
 import { KPI } from '../../components/ui/KPI'
+import { SkeletonKPI } from '../../components/ui/Skeleton'
 import { Cashflow } from './Cashflow'
 import { ContasPagar } from './ContasPagar'
 import { ContasReceber } from './ContasReceber'
 import { DRE } from './DRE'
+import { ModalLancamento } from './ModalLancamento'
 
 const TABS = [
-  { key: 'cashflow', label: 'Fluxo de Caixa'     },
-  { key: 'pagar',    label: 'Contas a Pagar'      },
-  { key: 'receber',  label: 'Contas a Receber'    },
-  { key: 'dre',      label: 'DRE'                 },
+  { key: 'cashflow', label: 'Fluxo de Caixa'  },
+  { key: 'pagar',    label: 'Contas a Pagar'   },
+  { key: 'receber',  label: 'Contas a Receber' },
+  { key: 'dre',      label: 'DRE'              },
 ]
 
 export function Financeiro() {
-  const [tab, setTab] = useState('cashflow')
+  const [tab,       setTab]       = useState('cashflow')
+  const [showModal, setShowModal] = useState(false)
 
-  const totalPagar = contasPagar
-    .filter((c) => c.status !== 'pago')
-    .reduce((a, c) => a + c.valor, 0)
+  // ── Hooks de dados ───────────────────────────────────────────────────────
+  const cashflow  = useCashflow()
+  const pagar     = useContasPagar()
+  const receber   = useContasReceber()
+  const dre       = useDRE()
+  const lancamento = useLancamento()
+
+  const loadingKPIs = cashflow.loading || pagar.loading
+
+  // KPIs derivados
+  const receita  = cashflow.data?.at(-1)?.receitas ?? 53000
+  const despesas = cashflow.data?.at(-1)?.despesas ?? 31000
+  const saldo    = receita - despesas
+
+  const handleRefetchAll = () => {
+    cashflow.execute()
+    pagar.refetch()
+    receber.refetch()
+    dre.execute()
+  }
+
+  const handleNovoLancamento = async (data) => {
+    await lancamento.criar(data)
+    handleRefetchAll()
+  }
 
   return (
     <div>
@@ -31,21 +56,34 @@ export function Financeiro() {
           <div style={{ fontSize: 11, color: C.blue, fontFamily: 'monospace', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6 }}>Módulo</div>
           <h2 style={{ fontSize: 22, fontWeight: 700, color: C.text, letterSpacing: -0.5 }}>Gestão Financeira</h2>
         </div>
-        <button style={{
-          display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px',
-          borderRadius: 8, background: C.blue, border: 'none',
-          color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer',
-        }}>
-          <Plus size={15} /> Novo Lançamento
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={handleRefetchAll}
+            title="Atualizar"
+            style={{ padding: '9px 12px', borderRadius: 8, background: C.s2, border: `1px solid ${C.border}`, color: C.muted2, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+          >
+            <RefreshCw size={15} />
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 8, background: C.blue, border: 'none', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+          >
+            <Plus size={15} /> Novo Lançamento
+          </button>
+        </div>
       </div>
 
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 24 }}>
-        <KPI label="Receita Mar"   value={fmtBRL(53000)}    sub="↑ 15% vs fev"    color={C.accent} icon={ArrowUpRight}   />
-        <KPI label="Despesas Mar"  value={fmtBRL(31000)}    sub="↓ 3% vs fev"     color={C.blue}   icon={ArrowDownRight} />
-        <KPI label="Saldo do Mês"  value={fmtBRL(22000)}    sub="lucro líquido"   color={C.yellow} icon={DollarSign}     />
-        <KPI label="Vence em 7d"   value={fmtBRL(totalPagar)} sub="contas a pagar" color={C.red}   icon={AlertTriangle}  />
+        {loadingKPIs
+          ? Array.from({ length: 4 }).map((_, i) => <SkeletonKPI key={i} />)
+          : <>
+              <KPI label="Receita Mar"  value={fmtBRL(receita)}        sub="↑ 15% vs fev"    color={C.accent} icon={ArrowUpRight}   />
+              <KPI label="Despesas Mar" value={fmtBRL(despesas)}       sub="↓ 3% vs fev"     color={C.blue}   icon={ArrowDownRight} />
+              <KPI label="Saldo do Mês" value={fmtBRL(saldo)}          sub="lucro líquido"   color={C.yellow} icon={DollarSign}     />
+              <KPI label="Vence em 7d"  value={fmtBRL(pagar.totalPendente)} sub="contas a pagar" color={C.red} icon={AlertTriangle}  />
+            </>
+        }
       </div>
 
       {/* Tabs */}
@@ -63,10 +101,33 @@ export function Financeiro() {
       </div>
 
       {/* Content */}
-      {tab === 'cashflow' && <Cashflow />}
-      {tab === 'pagar'    && <ContasPagar />}
-      {tab === 'receber'  && <ContasReceber />}
-      {tab === 'dre'      && <DRE />}
+      {tab === 'cashflow' && (
+        <Cashflow data={cashflow.data} loading={cashflow.loading} error={cashflow.error} onRefetch={cashflow.execute} />
+      )}
+      {tab === 'pagar' && (
+        <ContasPagar
+          contas={pagar.contas} totalPendente={pagar.totalPendente}
+          loading={pagar.loading} error={pagar.error}
+          onRefetch={pagar.refetch} onPagar={pagar.pagar}
+        />
+      )}
+      {tab === 'receber' && (
+        <ContasReceber
+          contas={receber.contas} totalPendente={receber.totalPendente}
+          loading={receber.loading} error={receber.error}
+          onRefetch={receber.refetch} onReceber={receber.receber}
+        />
+      )}
+      {tab === 'dre' && (
+        <DRE data={dre.data} loading={dre.loading} error={dre.error} onRefetch={dre.execute} />
+      )}
+
+      {showModal && (
+        <ModalLancamento
+          onClose={() => setShowModal(false)}
+          onSubmit={handleNovoLancamento}
+        />
+      )}
     </div>
   )
 }
