@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { X, Loader2 } from 'lucide-react'
 import { C } from '../../constants/theme'
 
-const CATEGORIAS = ['Vestuário', 'Calçados', 'Acessórios', 'Eletrônicos', 'Alimentação', 'Outro']
+const CATEGORIAS = ['Vestuário', 'Calçados', 'Acessórios']
 
 const INITIAL = {
   sku: '', nome: '', categoria: '',
