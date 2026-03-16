@@ -14,11 +14,22 @@ export function ModalLancamento({ onClose, onSubmit }) {
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }))
 
-  const categorias = form.tipo === 'receita' ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA
+  const isReceita  = form.tipo === 'receita'
+  const categorias = isReceita ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA
+
+  // Ao trocar tipo limpa campos que não se aplicam
+  const handleTipo = (tipo) => {
+    setForm(f => ({ ...f, tipo, data: '', categoria: '' }))
+    setError(null)
+  }
 
   const handleSubmit = async () => {
-    if (!form.descricao || !form.valor || !form.data) {
-      setError('Preencha Descrição, Valor e Data.')
+    if (!form.descricao || !form.valor) {
+      setError('Preencha Descrição e Valor.')
+      return
+    }
+    if (!isReceita && !form.data) {
+      setError('Preencha a data de vencimento.')
       return
     }
     setLoading(true)
@@ -56,7 +67,7 @@ export function ModalLancamento({ onClose, onSubmit }) {
         {/* Tipo toggle */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, padding: 4, background: C.s2, borderRadius: 10, border: `1px solid ${C.border}` }}>
           {['despesa', 'receita'].map(t => (
-            <button key={t} onClick={() => set('tipo', t)} style={{
+            <button key={t} onClick={() => handleTipo(t)} style={{
               flex: 1, padding: '8px 0', borderRadius: 7, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
               background: form.tipo === t ? (t === 'receita' ? 'rgba(0,217,168,.15)' : 'rgba(255,91,107,.15)') : 'transparent',
               color: form.tipo === t ? (t === 'receita' ? C.accent : C.red) : C.muted,
@@ -68,22 +79,47 @@ export function ModalLancamento({ onClose, onSubmit }) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+          {/* Descrição */}
           <div>
             <label style={labelStyle}>Descrição</label>
-            <input value={form.descricao} onChange={e => set('descricao', e.target.value)} disabled={loading} style={inputStyle} placeholder="Ex: Fornecedor Têxtil Alfa" />
+            <input
+              value={form.descricao}
+              onChange={e => set('descricao', e.target.value)}
+              disabled={loading}
+              style={inputStyle}
+              placeholder={isReceita ? 'Ex: Venda balcão — Pedido #4821' : 'Ex: Fornecedor Têxtil Alfa'}
+            />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {/* Valor + Vencimento (despesa) | só Valor (receita) */}
+          <div style={{ display: 'grid', gridTemplateColumns: isReceita ? '1fr' : '1fr 1fr', gap: 12 }}>
             <div>
               <label style={labelStyle}>Valor (R$)</label>
-              <input type="number" min="0" step="0.01" value={form.valor} onChange={e => set('valor', e.target.value)} disabled={loading} style={inputStyle} placeholder="0,00" />
+              <input
+                type="number" min="0" step="0.01"
+                value={form.valor}
+                onChange={e => set('valor', e.target.value)}
+                disabled={loading}
+                style={inputStyle}
+                placeholder="0,00"
+              />
             </div>
-            <div>
-              <label style={labelStyle}>Vencimento</label>
-              <input type="date" value={form.data} onChange={e => set('data', e.target.value)} disabled={loading} style={{ ...inputStyle, colorScheme: 'dark' }} />
-            </div>
+            {!isReceita && (
+              <div>
+                <label style={labelStyle}>Vencimento</label>
+                <input
+                  type="date"
+                  value={form.data}
+                  onChange={e => set('data', e.target.value)}
+                  disabled={loading}
+                  style={{ ...inputStyle, colorScheme: 'dark' }}
+                />
+              </div>
+            )}
           </div>
 
+          {/* Categoria */}
           <div>
             <label style={labelStyle}>Categoria</label>
             <select value={form.categoria} onChange={e => set('categoria', e.target.value)} disabled={loading} style={inputStyle}>
@@ -91,6 +127,20 @@ export function ModalLancamento({ onClose, onSubmit }) {
               {categorias.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
+
+          {/* Data de recebimento para receita */}
+          {isReceita && (
+            <div>
+              <label style={labelStyle}>Data do recebimento</label>
+              <input
+                type="date"
+                value={form.data}
+                onChange={e => set('data', e.target.value)}
+                disabled={loading}
+                style={{ ...inputStyle, colorScheme: 'dark' }}
+              />
+            </div>
+          )}
 
           {error && (
             <div style={{ fontSize: 12, color: C.red, background: 'rgba(255,91,107,.08)', border: `1px solid rgba(255,91,107,.25)`, borderRadius: 8, padding: '8px 12px' }}>
