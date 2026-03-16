@@ -1,6 +1,10 @@
+import { History } from 'lucide-react'
 import { C } from '../../constants/theme'
 import { Card } from '../../components/ui/Card'
 import { Tag } from '../../components/ui/Tag'
+import { SkeletonTable } from '../../components/ui/Skeleton'
+import { ErrorState } from '../../components/ui/ErrorState'
+import { EmptyState } from '../../components/ui/EmptyState'
 
 const TIPO_CONFIG = {
   entrada: { label: 'Entrada', color: '#00d9a8', bg: 'rgba(0,217,168,.10)' },
@@ -8,7 +12,15 @@ const TIPO_CONFIG = {
   ajuste:  { label: 'Ajuste',  color: '#f7c948', bg: 'rgba(247,201,72,.10)' },
 }
 
-export function TabelaMovimentos({ movimentos }) {
+export function TabelaMovimentos({ movimentos, loading, error, onRefetch }) {
+  if (loading) return <Card><SkeletonTable rows={6} cols={6} /></Card>
+  if (error)   return <Card><ErrorState error={error} onRetry={onRefetch} /></Card>
+  if (!movimentos.length) return (
+    <Card>
+      <EmptyState icon={History} title="Nenhuma movimentação registrada" description="As movimentações de estoque aparecerão aqui." />
+    </Card>
+  )
+
   return (
     <Card style={{ overflow: 'hidden' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -27,7 +39,7 @@ export function TabelaMovimentos({ movimentos }) {
         </thead>
         <tbody>
           {movimentos.map((m, i) => {
-            const cfg = TIPO_CONFIG[m.tipo]
+            const cfg = TIPO_CONFIG[m.tipo] ?? TIPO_CONFIG.ajuste
             return (
               <tr key={m.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.015)' }}>
                 <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted, fontFamily: 'monospace' }}>{m.data}</td>

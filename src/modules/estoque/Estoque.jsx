@@ -1,16 +1,18 @@
-import { useState, useMemo } from 'react'
-import { Plus, Search, Package, Boxes, DollarSign, AlertTriangle } from 'lucide-react'
+import { useState } from 'react'
+import { Plus, Search, Package, Boxes, DollarSign, AlertTriangle, RefreshCw } from 'lucide-react'
 import { C } from '../../constants/theme'
-import { produtos as allProdutos, movimentos, STATUS_ESTOQUE } from '../../data/mock'
 import { fmtBRL } from '../../utils/format'
+import { useProdutos } from '../../hooks/useProdutos'
+import { useMovimentos } from '../../hooks/useMovimentos'
 import { KPI } from '../../components/ui/KPI'
+import { SkeletonKPI } from '../../components/ui/Skeleton'
 import { TabelaProdutos } from './TabelaProdutos'
 import { TabelaMovimentos } from './TabelaMovimentos'
 import { ModalMovimentacao } from './ModalMovimentacao'
 
 const TABS = [
-  { key: 'produtos',    label: 'Produtos'        },
-  { key: 'movimentos',  label: 'Movimentações'   },
+  { key: 'produtos',   label: 'Produtos'      },
+  { key: 'movimentos', label: 'Movimentações' },
 ]
 
 const FILTROS = [
@@ -21,21 +23,27 @@ const FILTROS = [
 ]
 
 export function Estoque() {
-  const [busca, setBusca] = useState('')
-  const [filtroStatus, setFiltroStatus] = useState('todos')
-  const [tab, setTab] = useState('produtos')
+  const [tab,       setTab]       = useState('produtos')
   const [showModal, setShowModal] = useState(false)
 
-  const produtosFiltrados = useMemo(() => allProdutos.filter((p) => {
-    const q = busca.toLowerCase()
-    const matchBusca = p.nome.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || p.categoria.toLowerCase().includes(q)
-    const matchStatus = filtroStatus === 'todos' || p.status === filtroStatus
-    return matchBusca && matchStatus
-  }), [busca, filtroStatus])
+  // ── Hooks de dados ───────────────────────────────────────────────────────
+  const {
+    produtosFiltrados, resumo, loading: loadProd, error: errProd,
+    busca, setBusca, filtroStatus, setFiltroStatus,
+    refetch: refetchProd, editarProduto, removerProduto,
+  } = useProdutos()
 
-  const totalUnidades = allProdutos.reduce((a, p) => a + p.estoque, 0)
-  const valorTotal = allProdutos.reduce((a, p) => a + p.estoque * p.custo, 0)
-  const alertasN = allProdutos.filter((p) => p.status !== 'ok').length
+  const {
+    movimentos, loading: loadMov, error: errMov,
+    refetch: refetchMov, registrarMovimento,
+  } = useMovimentos()
+
+  // ── Handlers ─────────────────────────────────────────────────────────────
+  const handleNovaMovimentacao = async (data) => {
+    await registrarMovimento(data)
+    // Recarrega produtos para atualizar saldo
+    await refetchProd()
+  }
 
   return (
     <div>
@@ -45,20 +53,35 @@ export function Estoque() {
           <div style={{ fontSize: 11, color: C.accent, fontFamily: 'monospace', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6 }}>Módulo</div>
           <h2 style={{ fontSize: 22, fontWeight: 700, color: C.text, letterSpacing: -0.5 }}>Gestão de Estoque</h2>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 8, background: C.accent, border: 'none', color: '#0b1a14', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
-        >
-          <Plus size={15} /> Nova Movimentação
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => { refetchProd(); refetchMov() }}
+            title="Atualizar"
+            style={{ padding: '9px 12px', borderRadius: 8, background: C.s2, border: `1px solid ${C.border}`, color: C.muted2, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+          >
+            <RefreshCw size={15} />
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 8, background: C.accent, border: 'none', color: '#0b1a14', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+          >
+            <Plus size={15} /> Nova Movimentação
+          </button>
+        </div>
       </div>
 
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 24 }}>
-        <KPI label="Total SKUs"   value={allProdutos.length}  sub="produtos ativos"   color={C.blue}   icon={Package}       />
-        <KPI label="Unidades"     value={totalUnidades}        sub="em estoque"        color={C.accent} icon={Boxes}         />
-        <KPI label="Valor Estoque" value={fmtBRL(valorTotal)} sub="custo médio"       color={C.yellow} icon={DollarSign}    />
-        <KPI label="Alertas"      value={alertasN}             sub="precisam atenção"  color={C.red}    icon={AlertTriangle} />
+        {loadProd ? (
+          Array.from({ length: 4 }).map((_, i) => <SkeletonKPI key={i} />)
+        ) : (
+          <>
+            <KPI label="Total SKUs"    value={resumo.totalSkus}           sub="produtos ativos"  color={C.blue}   icon={Package}       />
+            <KPI label="Unidades"      value={resumo.totalUnidades}        sub="em estoque"       color={C.accent} icon={Boxes}         />
+            <KPI label="Valor Estoque" value={fmtBRL(resumo.valorTotal)}  sub="pelo custo"       color={C.yellow} icon={DollarSign}    />
+            <KPI label="Alertas"       value={resumo.alertas}              sub="precisam atenção" color={C.red}    icon={AlertTriangle} />
+          </>
+        )}
       </div>
 
       {/* Tabs */}
@@ -102,13 +125,33 @@ export function Estoque() {
               ))}
             </div>
           </div>
-          <TabelaProdutos produtos={produtosFiltrados} />
+
+          <TabelaProdutos
+            produtos={produtosFiltrados}
+            loading={loadProd}
+            error={errProd}
+            onRefetch={refetchProd}
+            onEditar={(p) => console.log('editar', p)}
+            onRemover={(p) => removerProduto(p.id)}
+          />
         </>
       )}
 
-      {tab === 'movimentos' && <TabelaMovimentos movimentos={movimentos} />}
+      {tab === 'movimentos' && (
+        <TabelaMovimentos
+          movimentos={movimentos}
+          loading={loadMov}
+          error={errMov}
+          onRefetch={refetchMov}
+        />
+      )}
 
-      {showModal && <ModalMovimentacao onClose={() => setShowModal(false)} />}
+      {showModal && (
+        <ModalMovimentacao
+          onClose={() => setShowModal(false)}
+          onSubmit={handleNovaMovimentacao}
+        />
+      )}
     </div>
   )
 }
