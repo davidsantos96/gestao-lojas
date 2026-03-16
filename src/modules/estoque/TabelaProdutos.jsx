@@ -8,7 +8,14 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { SkeletonTable } from '../../components/ui/Skeleton'
 import { ErrorState } from '../../components/ui/ErrorState'
 
-const COLUNAS = ['Código', 'Produto', 'Categoria', 'Estoque', 'Mínimo', 'Custo', 'Preço', 'Status', '']
+const COR_HEX = {
+  'Preto':'#1a1a1a','Branco':'#f5f5f5','Cinza':'#9e9e9e','Azul':'#1565c0',
+  'Azul Claro':'#64b5f6','Vermelho':'#c62828','Rosa':'#e91e63','Verde':'#2e7d32',
+  'Amarelo':'#f9a825','Laranja':'#e65100','Roxo':'#6a1b9a','Marrom':'#4e342e',
+  'Bege':'#d7ccc8','Vinho':'#880e4f',
+}
+
+const COLUNAS = ['Código', 'Produto', 'Categoria', 'Cor', 'Estoque', 'Mínimo', 'Custo', 'Preço', 'Status', '']
 
 export function TabelaProdutos({ produtos, loading, error, onRefetch, onEditar, onRemover }) {
   if (loading) return <Card><SkeletonTable rows={6} cols={9} /></Card>
@@ -49,6 +56,15 @@ export function TabelaProdutos({ produtos, loading, error, onRefetch, onEditar, 
                 <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted, fontFamily: 'monospace' }}>{p.sku}</td>
                 <td style={{ padding: '13px 16px', fontSize: 13, fontWeight: 600, color: C.text }}>{p.nome}</td>
                 <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted2 }}>{p.categoria}</td>
+                <td style={{ padding: '13px 16px' }}>
+                  {p.cor
+                    ? <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ width: 12, height: 12, borderRadius: '50%', background: COR_HEX[p.cor] || '#888', flexShrink: 0, border: p.cor === 'Branco' ? '1px solid #444' : 'none' }} />
+                        <span style={{ fontSize: 12, color: C.muted2 }}>{p.cor}</span>
+                      </div>
+                    : <span style={{ fontSize: 12, color: C.border }}>—</span>
+                  }
+                </td>
                 <td style={{ padding: '13px 16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ fontSize: 14, fontWeight: 700, color: cfg.color, minWidth: 28 }}>{p.estoque}</span>

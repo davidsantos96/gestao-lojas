@@ -4,8 +4,25 @@ import { C } from '../../constants/theme'
 
 const CATEGORIAS = ['Vestuário', 'Calçados', 'Acessórios']
 
+const CORES = [
+  { nome: 'Preto',    hex: '#1a1a1a' },
+  { nome: 'Branco',   hex: '#f5f5f5' },
+  { nome: 'Cinza',    hex: '#9e9e9e' },
+  { nome: 'Azul',     hex: '#1565c0' },
+  { nome: 'Azul Claro', hex: '#64b5f6' },
+  { nome: 'Vermelho', hex: '#c62828' },
+  { nome: 'Rosa',     hex: '#e91e63' },
+  { nome: 'Verde',    hex: '#2e7d32' },
+  { nome: 'Amarelo',  hex: '#f9a825' },
+  { nome: 'Laranja',  hex: '#e65100' },
+  { nome: 'Roxo',     hex: '#6a1b9a' },
+  { nome: 'Marrom',   hex: '#4e342e' },
+  { nome: 'Bege',     hex: '#d7ccc8' },
+  { nome: 'Vinho',    hex: '#880e4f' },
+]
+
 const INITIAL = {
-  sku: '', nome: '', categoria: '',
+  sku: '', nome: '', categoria: '', cor: '',
   preco: '', custo: '', estoque_inicial: '', minimo: '',
 }
 
@@ -26,6 +43,7 @@ export function ModalProduto({ produto, onClose, onSubmit }) {
     sku:              produto.sku,
     nome:             produto.nome,
     categoria:        produto.categoria,
+    cor:              produto.cor || '',
     preco:            produto.preco,
     custo:            produto.custo,
     estoque_inicial:  produto.estoque,
@@ -114,6 +132,40 @@ export function ModalProduto({ produto, onClose, onSubmit }) {
               <label style={labelStyle}>Custo (R$)</label>
               <input type="number" min="0" step="0.01" value={form.custo} onChange={e => set('custo', e.target.value)} disabled={loading} placeholder="0,00" style={inputStyle} />
             </div>
+          </div>
+
+          {/* Cor */}
+          <div>
+            <label style={labelStyle}>Cor</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {CORES.map(c => {
+                const selecionada = form.cor === c.nome
+                return (
+                  <button
+                    key={c.nome}
+                    type="button"
+                    title={c.nome}
+                    onClick={() => set('cor', selecionada ? '' : c.nome)}
+                    disabled={loading}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '5px 10px', borderRadius: 20, cursor: 'pointer',
+                      border: `1.5px solid ${selecionada ? c.hex : C.border}`,
+                      background: selecionada ? `${c.hex}22` : C.s2,
+                      transition: 'all .12s',
+                    }}
+                  >
+                    <span style={{ width: 12, height: 12, borderRadius: '50%', background: c.hex, flexShrink: 0, border: c.hex === '#f5f5f5' ? `1px solid ${C.border}` : 'none' }} />
+                    <span style={{ fontSize: 12, color: selecionada ? c.hex : C.muted2, fontWeight: selecionada ? 700 : 400 }}>{c.nome}</span>
+                  </button>
+                )
+              })}
+            </div>
+            {form.cor && (
+              <button onClick={() => set('cor', '')} style={{ marginTop: 6, fontSize: 11, color: C.muted, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                ✕ Limpar seleção
+              </button>
+            )}
           </div>
 
           {/* Margem calculada ao vivo */}
