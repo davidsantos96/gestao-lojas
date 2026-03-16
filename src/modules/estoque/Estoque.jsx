@@ -8,6 +8,7 @@ import { KPI } from '../../components/ui/KPI'
 import { SkeletonKPI } from '../../components/ui/Skeleton'
 import { TabelaProdutos } from './TabelaProdutos'
 import { TabelaMovimentos } from './TabelaMovimentos'
+import { ModalProduto } from './ModalProduto'
 import { ModalMovimentacao } from './ModalMovimentacao'
 
 const TABS = [
@@ -22,15 +23,22 @@ const FILTROS = [
   { value: 'out',   label: 'Zerado' },
 ]
 
+// Botão primário contextual por aba
+const CTA = {
+  produtos:   { label: 'Novo Produto',       color: C.accent,  textColor: '#0b1a14' },
+  movimentos: { label: 'Nova Movimentação',  color: C.blue,    textColor: '#fff'    },
+}
+
 export function Estoque() {
-  const [tab,       setTab]       = useState('produtos')
-  const [showModal, setShowModal] = useState(false)
+  const [tab,           setTab]           = useState('produtos')
+  const [modalProduto,  setModalProduto]  = useState(false)   // false | null (novo) | objeto (editar)
+  const [modalMov,      setModalMov]      = useState(false)
 
   // ── Hooks de dados ───────────────────────────────────────────────────────
   const {
     produtosFiltrados, resumo, loading: loadProd, error: errProd,
     busca, setBusca, filtroStatus, setFiltroStatus,
-    refetch: refetchProd, editarProduto, removerProduto,
+    refetch: refetchProd, adicionarProduto, editarProduto, removerProduto,
   } = useProdutos()
 
   const {
@@ -38,12 +46,27 @@ export function Estoque() {
     refetch: refetchMov, registrarMovimento,
   } = useMovimentos()
 
+  // ── CTA contextual ───────────────────────────────────────────────────────
+  const handleCTA = () => {
+    if (tab === 'produtos')   setModalProduto(null)   // null = novo produto
+    if (tab === 'movimentos') setModalMov(true)
+  }
+
   // ── Handlers ─────────────────────────────────────────────────────────────
+  const handleSalvarProduto = async (data) => {
+    if (modalProduto) {
+      await editarProduto(modalProduto.id, data)
+    } else {
+      await adicionarProduto(data)
+    }
+  }
+
   const handleNovaMovimentacao = async (data) => {
     await registrarMovimento(data)
-    // Recarrega produtos para atualizar saldo
-    await refetchProd()
+    await refetchProd()   // atualiza saldo dos produtos
   }
+
+  const cta = CTA[tab]
 
   return (
     <div>
@@ -56,39 +79,45 @@ export function Estoque() {
         <div style={{ display: 'flex', gap: 8 }}>
           <button
             onClick={() => { refetchProd(); refetchMov() }}
-            title="Atualizar"
+            title="Atualizar dados"
             style={{ padding: '9px 12px', borderRadius: 8, background: C.s2, border: `1px solid ${C.border}`, color: C.muted2, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
           >
             <RefreshCw size={15} />
           </button>
           <button
-            onClick={() => setShowModal(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 8, background: C.accent, border: 'none', color: '#0b1a14', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+            onClick={handleCTA}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '9px 18px', borderRadius: 8, border: 'none',
+              background: cta.color, color: cta.textColor,
+              fontWeight: 700, fontSize: 13, cursor: 'pointer',
+              transition: 'background .15s',
+            }}
           >
-            <Plus size={15} /> Nova Movimentação
+            <Plus size={15} /> {cta.label}
           </button>
         </div>
       </div>
 
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 24 }}>
-        {loadProd ? (
-          Array.from({ length: 4 }).map((_, i) => <SkeletonKPI key={i} />)
-        ) : (
-          <>
-            <KPI label="Total SKUs"    value={resumo.totalSkus}           sub="produtos ativos"  color={C.blue}   icon={Package}       />
-            <KPI label="Unidades"      value={resumo.totalUnidades}        sub="em estoque"       color={C.accent} icon={Boxes}         />
-            <KPI label="Valor Estoque" value={fmtBRL(resumo.valorTotal)}  sub="pelo custo"       color={C.yellow} icon={DollarSign}    />
-            <KPI label="Alertas"       value={resumo.alertas}              sub="precisam atenção" color={C.red}    icon={AlertTriangle} />
-          </>
-        )}
+        {loadProd
+          ? Array.from({ length: 4 }).map((_, i) => <SkeletonKPI key={i} />)
+          : <>
+              <KPI label="Total SKUs"    value={resumo.totalSkus}          sub="produtos ativos"  color={C.blue}   icon={Package}       />
+              <KPI label="Unidades"      value={resumo.totalUnidades}       sub="em estoque"       color={C.accent} icon={Boxes}         />
+              <KPI label="Valor Estoque" value={fmtBRL(resumo.valorTotal)} sub="pelo custo"       color={C.yellow} icon={DollarSign}    />
+              <KPI label="Alertas"       value={resumo.alertas}             sub="precisam atenção" color={C.red}    icon={AlertTriangle} />
+            </>
+        }
       </div>
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: `1px solid ${C.border}` }}>
         {TABS.map(({ key, label }) => (
           <button key={key} onClick={() => setTab(key)} style={{
-            padding: '10px 20px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+            padding: '10px 20px', border: 'none', background: 'none', cursor: 'pointer',
+            fontSize: 13, fontWeight: 600,
             color: tab === key ? C.accent : C.muted,
             borderBottom: tab === key ? `2px solid ${C.accent}` : '2px solid transparent',
             marginBottom: -1,
@@ -98,7 +127,7 @@ export function Estoque() {
         ))}
       </div>
 
-      {/* Content */}
+      {/* Aba Produtos */}
       {tab === 'produtos' && (
         <>
           <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
@@ -106,7 +135,7 @@ export function Estoque() {
               <Search size={14} color={C.muted} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
               <input
                 value={busca}
-                onChange={(e) => setBusca(e.target.value)}
+                onChange={e => setBusca(e.target.value)}
                 placeholder="Buscar por nome, SKU ou categoria..."
                 style={{ width: '100%', padding: '9px 12px 9px 34px', background: C.s2, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 13, outline: 'none' }}
               />
@@ -131,12 +160,13 @@ export function Estoque() {
             loading={loadProd}
             error={errProd}
             onRefetch={refetchProd}
-            onEditar={(p) => console.log('editar', p)}
-            onRemover={(p) => removerProduto(p.id)}
+            onEditar={p => setModalProduto(p)}      // abre modal de edição
+            onRemover={p => removerProduto(p.id)}
           />
         </>
       )}
 
+      {/* Aba Movimentações */}
       {tab === 'movimentos' && (
         <TabelaMovimentos
           movimentos={movimentos}
@@ -146,9 +176,19 @@ export function Estoque() {
         />
       )}
 
-      {showModal && (
+      {/* Modal Produto (novo: modalProduto === null | editar: modalProduto = objeto) */}
+      {modalProduto !== false && (
+        <ModalProduto
+          produto={modalProduto}
+          onClose={() => setModalProduto(false)}
+          onSubmit={handleSalvarProduto}
+        />
+      )}
+
+      {/* Modal Movimentação */}
+      {modalMov && (
         <ModalMovimentacao
-          onClose={() => setShowModal(false)}
+          onClose={() => setModalMov(false)}
           onSubmit={handleNovaMovimentacao}
         />
       )}
