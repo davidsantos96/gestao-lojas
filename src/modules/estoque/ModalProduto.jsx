@@ -1,25 +1,82 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { X, Loader2 } from 'lucide-react'
 import { C } from '../../constants/theme'
 
 const CATEGORIAS = ['Vestuário', 'Calçados', 'Acessórios']
 
 const CORES = [
-  { nome: 'Preto',    hex: '#1a1a1a' },
-  { nome: 'Branco',   hex: '#f5f5f5' },
-  { nome: 'Cinza',    hex: '#9e9e9e' },
-  { nome: 'Azul',     hex: '#1565c0' },
+  { nome: 'Preto',      hex: '#1a1a1a' },
+  { nome: 'Branco',     hex: '#f5f5f5' },
+  { nome: 'Cinza',      hex: '#9e9e9e' },
+  { nome: 'Azul',       hex: '#1565c0' },
   { nome: 'Azul Claro', hex: '#64b5f6' },
-  { nome: 'Vermelho', hex: '#c62828' },
-  { nome: 'Rosa',     hex: '#e91e63' },
-  { nome: 'Verde',    hex: '#2e7d32' },
-  { nome: 'Amarelo',  hex: '#f9a825' },
-  { nome: 'Laranja',  hex: '#e65100' },
-  { nome: 'Roxo',     hex: '#6a1b9a' },
-  { nome: 'Marrom',   hex: '#4e342e' },
-  { nome: 'Bege',     hex: '#d7ccc8' },
-  { nome: 'Vinho',    hex: '#880e4f' },
+  { nome: 'Vermelho',   hex: '#c62828' },
+  { nome: 'Rosa',       hex: '#e91e63' },
+  { nome: 'Verde',      hex: '#2e7d32' },
+  { nome: 'Amarelo',    hex: '#f9a825' },
+  { nome: 'Laranja',    hex: '#e65100' },
+  { nome: 'Roxo',       hex: '#6a1b9a' },
+  { nome: 'Marrom',     hex: '#4e342e' },
+  { nome: 'Bege',       hex: '#d7ccc8' },
+  { nome: 'Vinho',      hex: '#880e4f' },
 ]
+
+// Mapa PT-BR → CSS color names para reconhecimento automático
+const PT_PARA_CSS = {
+  'preto':'black','negro':'black','escuro':'#222',
+  'branco':'white','claro':'#f8f8f8',
+  'cinza':'gray','cinzento':'gray','prata':'silver',
+  'vermelho':'red','encarnado':'red',
+  'azul':'blue','azul marinho':'navy','marinho':'navy',
+  'azul claro':'#64b5f6','azul bebê':'lightblue','celeste':'#87ceeb',
+  'azul royal':'royalblue','royal':'royalblue',
+  'verde':'green','verde escuro':'darkgreen','verde claro':'lightgreen',
+  'verde oliva':'olive','oliva':'olive','musgo':'#4a5240',
+  'amarelo':'yellow','dourado':'gold','ouro':'gold',
+  'laranja':'orange','coral':'coral','salmão':'salmon','salmon':'salmon',
+  'rosa':'#e91e63','rosa claro':'pink','pink':'pink','fúcsia':'fuchsia',
+  'roxo':'purple','violeta':'violet','lilás':'#c8a2c8','lavanda':'lavender',
+  'marrom':'#4e342e','café':'#4e342e','chocolate':'chocolate','caramelo':'#c68642',
+  'bege':'#d7ccc8','areia':'#c2b280','nude':'#e8c9a0',
+  'vinho':'#880e4f','bordô':'#800000','borgonha':'#800020',
+  'terracota':'#c0652b','cobre':'#b87333',
+  'creme':'#fffdd0','off-white':'#f8f4e3','offwhite':'#f8f4e3',
+  'turquesa':'turquoise','água':'#00ced1','tiffany':'#81d8d0',
+  'índigo':'indigo','anil':'#4b0082',
+}
+
+// Tenta resolver nome digitado → hex usando canvas
+function resolverCorPorNome(nome) {
+  if (!nome) return null
+  const lower = nome.toLowerCase().trim()
+
+  // 1. Busca no mapa PT
+  if (PT_PARA_CSS[lower]) {
+    return cssParaHex(PT_PARA_CSS[lower])
+  }
+
+  // 2. Tentativa parcial no mapa PT (ex: "azul ma" → "azul marinho")
+  const parcial = Object.keys(PT_PARA_CSS).find(k => k.startsWith(lower))
+  if (parcial) return cssParaHex(PT_PARA_CSS[parcial])
+
+  // 3. Tenta direto como CSS color name (inglês e hex)
+  return cssParaHex(lower)
+}
+
+function cssParaHex(cor) {
+  try {
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = 1
+    const ctx = canvas.getContext('2d')
+    ctx.fillStyle = cor
+    ctx.fillRect(0, 0, 1, 1)
+    const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data
+    if (a === 0) return null  // transparente = nome inválido
+    // ignora preto puro (fillStyle inválido retorna preto)
+    if (r === 0 && g === 0 && b === 0 && cor !== 'black' && cor !== '#000' && cor !== '#000000') return null
+    return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`
+  } catch { return null }
+}
 
 const INITIAL = {
   sku: '', nome: '', categoria: '', cor: '',
@@ -36,6 +93,141 @@ const labelStyle = {
   fontSize: 11, color: C.muted, fontFamily: 'monospace',
   letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 6,
 }
+
+// ─── Seletor de cor ──────────────────────────────────────────────────────────
+function CorPicker({ value, onChange, disabled, labelStyle }) {
+  const [input,     setInput]     = useState('')
+  const [preview,   setPreview]   = useState(null)   // { hex, nome } da cor digitada
+  const [sugestoes, setSugestoes] = useState([])
+  const debounceRef = useRef()
+
+  // Filtra sugestões da paleta conforme digitação
+  useEffect(() => {
+    clearTimeout(debounceRef.current)
+    if (!input.trim()) { setSugestoes([]); setPreview(null); return }
+    debounceRef.current = setTimeout(() => {
+      const q = input.toLowerCase()
+      const found = CORES.filter(c => c.nome.toLowerCase().includes(q))
+      setSugestoes(found)
+      if (found.length === 0) {
+        const hex = resolverCorPorNome(q)
+        setPreview(hex ? { hex, nome: input.trim() } : null)
+      } else {
+        setPreview(null)
+      }
+    }, 200)
+  }, [input])
+
+  const selPaleta = (c) => {
+    onChange(c.nome)
+    setInput('')
+    setSugestoes([])
+    setPreview(null)
+  }
+
+  const confirmarCustom = () => {
+    if (!preview) return
+    onChange(preview.nome)
+    setInput('')
+    setPreview(null)
+    setSugestoes([])
+  }
+
+  const hexAtual = CORES.find(c => c.nome === value)?.hex
+    || (value ? resolverCorPorNome(value) : null)
+
+  return (
+    <div>
+      <label style={labelStyle}>Cor</label>
+
+      {/* Campo de busca / digitação */}
+      <div style={{ position: 'relative', marginBottom: 10 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ flex: 1, position: 'relative' }}>
+            {/* Preview ao lado esquerdo do input */}
+            {(hexAtual && !input) && (
+              <span style={{
+                position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
+                width: 14, height: 14, borderRadius: '50%', background: hexAtual,
+                border: hexAtual === '#f5f5f5' ? `1px solid #555` : 'none',
+                flexShrink: 0,
+              }} />
+            )}
+            <input
+              value={input || (!input && value ? value : input)}
+              onChange={e => {
+                setInput(e.target.value)
+                if (!e.target.value) onChange('')
+              }}
+              onFocus={() => { if (value) setInput(value) }}
+              disabled={disabled}
+              placeholder="Ex: azul royal, bordô, coral..."
+              style={{
+                width: '100%',
+                padding: hexAtual && !input ? '10px 12px 10px 32px' : '10px 12px',
+                background: C.s2, border: `1px solid ${C.border}`,
+                borderRadius: 8, color: C.text, fontSize: 13, outline: 'none',
+              }}
+            />
+          </div>
+
+          {/* Chip da cor selecionada ou preview */}
+          {(value && !input) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 20, background: hexAtual ? `${hexAtual}22` : C.s2, border: `1.5px solid ${hexAtual || C.border}`, whiteSpace: 'nowrap' }}>
+              {hexAtual && <span style={{ width: 10, height: 10, borderRadius: '50%', background: hexAtual, flexShrink: 0 }} />}
+              <span style={{ fontSize: 12, fontWeight: 600, color: hexAtual || C.muted2 }}>{value}</span>
+              <button onClick={() => { onChange(''); setInput('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, fontSize: 13, lineHeight: 1, padding: 0, marginLeft: 2 }}>✕</button>
+            </div>
+          )}
+        </div>
+
+        {/* Dropdown de sugestões */}
+        {(sugestoes.length > 0 || preview) && (
+          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, marginTop: 4, zIndex: 50, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,.4)' }}>
+            {sugestoes.map(c => (
+              <button key={c.nome} onClick={() => selPaleta(c)} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                onMouseEnter={e => e.currentTarget.style.background = C.s2}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                <span style={{ width: 14, height: 14, borderRadius: '50%', background: c.hex, flexShrink: 0, border: c.hex === '#f5f5f5' ? `1px solid ${C.border}` : 'none' }} />
+                <span style={{ fontSize: 13, color: C.text }}>{c.nome}</span>
+              </button>
+            ))}
+
+            {preview && (
+              <button onClick={confirmarCustom} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 14px', background: 'none', border: 'none', borderTop: `1px solid ${C.border}`, cursor: 'pointer', textAlign: 'left' }}
+                onMouseEnter={e => e.currentTarget.style.background = C.s2}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                <span style={{ width: 14, height: 14, borderRadius: '50%', background: preview.hex, flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: C.text }}>Usar "<strong>{preview.nome}</strong>"</span>
+                <span style={{ fontSize: 11, color: C.muted, marginLeft: 'auto' }}>{preview.hex}</span>
+              </button>
+            )}
+
+            {sugestoes.length === 0 && !preview && input && (
+              <div style={{ padding: '10px 14px', fontSize: 12, color: C.muted }}>
+                Cor não reconhecida — verifique o nome
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Paleta rápida (chips) */}
+      {!input && !value && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {CORES.map(c => (
+            <button key={c.nome} type="button" title={c.nome} onClick={() => selPaleta(c)} disabled={disabled}
+              style={{ width: 24, height: 24, borderRadius: '50%', background: c.hex, border: `2px solid ${C.border}`, cursor: 'pointer', transition: 'transform .1s' }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.25)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 
 export function ModalProduto({ produto, onClose, onSubmit }) {
   const isEdit = !!produto
@@ -135,38 +327,7 @@ export function ModalProduto({ produto, onClose, onSubmit }) {
           </div>
 
           {/* Cor */}
-          <div>
-            <label style={labelStyle}>Cor</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {CORES.map(c => {
-                const selecionada = form.cor === c.nome
-                return (
-                  <button
-                    key={c.nome}
-                    type="button"
-                    title={c.nome}
-                    onClick={() => set('cor', selecionada ? '' : c.nome)}
-                    disabled={loading}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 6,
-                      padding: '5px 10px', borderRadius: 20, cursor: 'pointer',
-                      border: `1.5px solid ${selecionada ? c.hex : C.border}`,
-                      background: selecionada ? `${c.hex}22` : C.s2,
-                      transition: 'all .12s',
-                    }}
-                  >
-                    <span style={{ width: 12, height: 12, borderRadius: '50%', background: c.hex, flexShrink: 0, border: c.hex === '#f5f5f5' ? `1px solid ${C.border}` : 'none' }} />
-                    <span style={{ fontSize: 12, color: selecionada ? c.hex : C.muted2, fontWeight: selecionada ? 700 : 400 }}>{c.nome}</span>
-                  </button>
-                )
-              })}
-            </div>
-            {form.cor && (
-              <button onClick={() => set('cor', '')} style={{ marginTop: 6, fontSize: 11, color: C.muted, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                ✕ Limpar seleção
-              </button>
-            )}
-          </div>
+          <CorPicker value={form.cor} onChange={v => set('cor', v)} disabled={loading} labelStyle={labelStyle} />
 
           {/* Margem calculada ao vivo */}
           {form.preco && form.custo && parseFloat(form.preco) > 0 && (
