@@ -33,6 +33,7 @@ export function Estoque() {
   const [tab,           setTab]           = useState('produtos')
   const [modalProduto,  setModalProduto]  = useState(false)   // false | null (novo) | objeto (editar)
   const [modalMov,      setModalMov]      = useState(false)
+  const [refreshing,    setRefreshing]    = useState(false)
 
   // ── Hooks de dados ───────────────────────────────────────────────────────
   const {
@@ -45,6 +46,13 @@ export function Estoque() {
     movimentos, loading: loadMov, error: errMov,
     refetch: refetchMov, registrarMovimento,
   } = useMovimentos()
+
+  // ── Refresh ──────────────────────────────────────────────────────────────
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await Promise.all([refetchProd(), refetchMov()])
+    setRefreshing(false)
+  }
 
   // ── CTA contextual ───────────────────────────────────────────────────────
   const handleCTA = () => {
@@ -78,12 +86,15 @@ export function Estoque() {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
-            onClick={() => { refetchProd(); refetchMov() }}
+            onClick={handleRefresh}
+            disabled={refreshing}
             title="Atualizar dados"
-            style={{ padding: '9px 12px', borderRadius: 8, background: C.s2, border: `1px solid ${C.border}`, color: C.muted2, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            style={{ padding: '9px 12px', borderRadius: 8, background: C.s2, border: `1px solid ${C.border}`, color: refreshing ? C.muted : C.muted2, cursor: refreshing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}
           >
-            <RefreshCw size={15} />
+            <RefreshCw size={14} style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
+            {refreshing ? 'Atualizando...' : ''}
           </button>
+          <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
           <button
             onClick={handleCTA}
             style={{

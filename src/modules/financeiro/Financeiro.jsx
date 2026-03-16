@@ -20,7 +20,8 @@ const TABS = [
 
 export function Financeiro() {
   const [tab,       setTab]       = useState('cashflow')
-  const [showModal, setShowModal] = useState(false)
+  const [showModal,  setShowModal]  = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
 
   // ── Hooks de dados ───────────────────────────────────────────────────────
   const cashflow  = useCashflow()
@@ -36,11 +37,10 @@ export function Financeiro() {
   const despesas = cashflow.data?.at(-1)?.despesas ?? 31000
   const saldo    = receita - despesas
 
-  const handleRefetchAll = () => {
-    cashflow.execute()
-    pagar.refetch()
-    receber.refetch()
-    dre.execute()
+  const handleRefetchAll = async () => {
+    setRefreshing(true)
+    await Promise.all([cashflow.execute(), pagar.refetch(), receber.refetch(), dre.execute()])
+    setRefreshing(false)
   }
 
   const handleNovoLancamento = async (data) => {
@@ -59,11 +59,14 @@ export function Financeiro() {
         <div style={{ display: 'flex', gap: 8 }}>
           <button
             onClick={handleRefetchAll}
-            title="Atualizar"
-            style={{ padding: '9px 12px', borderRadius: 8, background: C.s2, border: `1px solid ${C.border}`, color: C.muted2, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            disabled={refreshing}
+            title="Atualizar dados"
+            style={{ padding: '9px 12px', borderRadius: 8, background: C.s2, border: `1px solid ${C.border}`, color: refreshing ? C.muted : C.muted2, cursor: refreshing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}
           >
-            <RefreshCw size={15} />
+            <RefreshCw size={14} style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
+            {refreshing ? 'Atualizando...' : ''}
           </button>
+          <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
           <button
             onClick={() => setShowModal(true)}
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 8, background: C.blue, border: 'none', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
