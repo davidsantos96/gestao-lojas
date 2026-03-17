@@ -199,6 +199,7 @@ export function Estoque() {
       {/* Modal Movimentação */}
       {modalMov && (
         <ModalMovimentacao
+          produtos={produtosFiltrados}
           onClose={() => setModalMov(false)}
           onSubmit={handleNovaMovimentacao}
         />

@@ -1,35 +1,21 @@
 import { useCallback } from 'react'
 import { useAsync } from './useAsync'
 import { getMovimentos, createMovimento } from '../services/estoqueService'
+import { TIPO_MOV_TO_API } from '../services/api'
 import { movimentos as MOCK_MOVIMENTOS } from '../data/mock'
 
-const USE_MOCK = import.meta.env.VITE_API_URL === undefined
+const USE_MOCK = !import.meta.env.VITE_API_URL
 
-/**
- * Hook para listagem e registro de movimentações de estoque.
- *
- * @param {Object} params  Filtros opcionais: produto_id, tipo, de, ate
- */
 export function useMovimentos(params = {}) {
   const fetchFn = useCallback(() => {
     if (USE_MOCK) return Promise.resolve({ data: MOCK_MOVIMENTOS, total: MOCK_MOVIMENTOS.length })
     return getMovimentos(params)
-  }, [JSON.stringify(params)]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(params)]) // eslint-disable-line
 
-  const {
-    data: response,
-    loading,
-    error,
-    execute: refetch,
-    setData: setResponse,
-  } = useAsync(fetchFn)
+  const { data: response, loading, error, execute: refetch, setData: setResponse } = useAsync(fetchFn)
 
   const movimentos = response?.data ?? []
 
-  /**
-   * Registra uma nova movimentação e atualiza a lista localmente.
-   * @param {{ produto_id, tipo, qtd, obs }} data
-   */
   const registrarMovimento = useCallback(async (data) => {
     if (USE_MOCK) {
       const novo = {
@@ -41,14 +27,24 @@ export function useMovimentos(params = {}) {
         responsavel: 'Usuário',
         origem:      data.obs || 'Lançamento manual',
       }
-      setResponse((prev) => ({
-        ...prev,
-        data: [novo, ...(prev?.data ?? [])],
-      }))
+      setResponse(prev => ({ ...prev, data: [novo, ...(prev?.data ?? [])] }))
       return novo
     }
 
-    const novo = await createMovimento(data)
+    // Adapta payload para o contrato da API
+    // Modal envia: { produto (nome), tipo (minúsculo), qtd, obs }
+    // API espera:  { produto_id, tipo (MAIÚSCULO), quantidade, obs }
+    const payload = {
+      produto_id: data.produto_id || data.produto,   // modal novo produto enviará produto_id
+      tipo:       TIPO_MOV_TO_API[data.tipo] ?? data.tipo.toUpperCase(),
+      quantidade: data.tipo === 'saida'
+        ? -Math.abs(Number(data.qtd))                // saída → negativo
+        : Math.abs(Number(data.qtd)),
+      origem: data.obs || undefined,
+      obs:    data.obs || undefined,
+    }
+
+    const novo = await createMovimento(payload)
     await refetch()
     return novo
   }, [refetch, setResponse])
