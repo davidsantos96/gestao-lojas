@@ -1,19 +1,5 @@
-const BASE_URL  = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
-const TIMEOUT   = Number(import.meta.env.VITE_API_TIMEOUT) || 10000
-
-// Retorna o empresaId do usuário logado (JWT) ou cai no fallback do .env
-function getEmpresaId() {
-  try {
-    const raw = localStorage.getItem('auth_usuario')
-    if (raw) {
-      const usuario = JSON.parse(raw)
-      if (usuario?.empresaId) return usuario.empresaId
-    }
-  } catch {
-    // JSON inválido — ignora
-  }
-  return import.meta.env.VITE_EMPRESA_ID || 'empresa-demo'
-}
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const TIMEOUT  = Number(import.meta.env.VITE_API_TIMEOUT) || 10000
 
 // ─── Erro tipado ──────────────────────────────────────────────────────────────
 export class ApiError extends Error {
@@ -45,8 +31,7 @@ async function request(path, options = {}) {
   const url = `${BASE_URL}${path}`
 
   const headers = {
-    'Content-Type':  'application/json',
-    'x-empresa-id':  getEmpresaId(),       // tenant — extraído do usuário logado
+    'Content-Type': 'application/json',
     ...options.headers,
   }
 
@@ -54,6 +39,13 @@ async function request(path, options = {}) {
   if (token) headers['Authorization'] = `Bearer ${token}`
 
   const res = await fetchWithTimeout(url, { ...options, headers })
+
+  // Token expirado ou inválido — limpa sessão e força re-login
+  if (res.status === 401) {
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('auth_usuario')
+    window.dispatchEvent(new Event('auth:logout'))
+  }
 
   if (res.status === 204 || res.status === 304) return null
 
@@ -74,7 +66,7 @@ async function upload(path, file) {
   const form = new FormData()
   form.append('file', file)
 
-  const headers = { 'x-empresa-id': getEmpresaId() }
+  const headers = {}
   const token   = localStorage.getItem('auth_token')
   if (token) headers['Authorization'] = `Bearer ${token}`
 

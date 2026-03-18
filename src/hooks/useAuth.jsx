@@ -28,6 +28,16 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false))
   }, [])
 
+  // Escuta o evento disparado pela api.js quando recebe 401 (token expirado)
+  useEffect(() => {
+    const handleLogout = () => {
+      setUsuario(null)
+      setError(null)
+    }
+    window.addEventListener('auth:logout', handleLogout)
+    return () => window.removeEventListener('auth:logout', handleLogout)
+  }, [])
+
   const login = useCallback(async (email, senha) => {
     setError(null)
     setLoading(true)
