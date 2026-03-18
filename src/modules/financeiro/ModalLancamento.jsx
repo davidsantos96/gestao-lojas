@@ -17,9 +17,11 @@ export function ModalLancamento({ onClose, onSubmit }) {
   const isReceita  = form.tipo === 'receita'
   const categorias = isReceita ? CATEGORIAS_RECEITA : CATEGORIAS_DESPESA
 
+  const hoje = new Date().toISOString().split('T')[0]
+
   // Ao trocar tipo limpa campos que não se aplicam
   const handleTipo = (tipo) => {
-    setForm(f => ({ ...f, tipo, data: '', categoria: '' }))
+    setForm(f => ({ ...f, tipo, data: tipo === 'receita' ? hoje : '', categoria: '' }))
     setError(null)
   }
 
@@ -28,8 +30,8 @@ export function ModalLancamento({ onClose, onSubmit }) {
       setError('Preencha Descrição e Valor.')
       return
     }
-    if (!isReceita && !form.data) {
-      setError('Preencha a data de vencimento.')
+    if (!form.data) {
+      setError(isReceita ? 'Preencha a data do recebimento.' : 'Preencha a data de vencimento.')
       return
     }
     setLoading(true)
