@@ -10,6 +10,13 @@ export function login(email, senha) {
 }
 
 /**
+ * POST /auth/logout — invalida o token no servidor
+ */
+export function logoutApi() {
+  return api.post('/auth/logout', {})
+}
+
+/**
  * GET /auth/me
  * → { id, nome, email, perfil, empresaId, empresaNome }
  */

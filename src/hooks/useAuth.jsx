@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
-import { login as loginApi, getMe } from '../services/authService'
+import { login as loginApi, getMe, logoutApi } from '../services/authService'
 
 const AuthContext = createContext(null)
 
@@ -55,11 +55,17 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('auth_usuario')
-    setUsuario(null)
-    setError(null)
+  const logout = useCallback(async () => {
+    try {
+      await logoutApi()
+    } catch {
+      // ignora erros (ex: token já expirado)
+    } finally {
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('auth_usuario')
+      setUsuario(null)
+      setError(null)
+    }
   }, [])
 
   return (
