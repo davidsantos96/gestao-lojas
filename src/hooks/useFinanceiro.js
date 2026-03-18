@@ -123,7 +123,8 @@ export function useDRE() {
   return useAsync(fetchFn)
 }
 
-// ─── Novo lançamento ──────────────────────────────────────────────────────────export function useLancamentos(params = {}) {
+// ─── Lançamentos (lista) ────────────────────────────────────────────────────────
+export function useLancamentos(params = {}) {
   const fetchFn = useCallback(() => getLancamentos(params), [JSON.stringify(params)]) // eslint-disable-line
 
   const { data: response, loading, error, execute: refetch } = useAsync(fetchFn)
@@ -137,8 +138,9 @@ export function useDRE() {
   }
 }
 
-// ─── Criar lançamento ─────────────────────────────────────────────────────
-// (mantido como useLancamento para não quebrar Financeiro.jsx)export function useLancamento() {
+// ─── Criar lançamento ────────────────────────────────────────────────────────
+// (mantido como useLancamento para não quebrar Financeiro.jsx)
+export function useLancamento() {
   const { loading, error, execute } = useAsync(
     useCallback((data) => {
       if (USE_MOCK) return Promise.resolve({ id: Date.now(), ...data })

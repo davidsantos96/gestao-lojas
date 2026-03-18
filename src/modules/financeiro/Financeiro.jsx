@@ -2,20 +2,22 @@ import { useState } from 'react'
 import { Plus, ArrowUpRight, ArrowDownRight, DollarSign, AlertTriangle, RefreshCw } from 'lucide-react'
 import { C } from '../../constants/theme'
 import { fmtBRL } from '../../utils/format'
-import { useCashflow, useContasPagar, useContasReceber, useDRE, useLancamento, useResumoFinanceiro } from '../../hooks/useFinanceiro'
+import { useCashflow, useContasPagar, useContasReceber, useDRE, useLancamento, useLancamentos, useResumoFinanceiro } from '../../hooks/useFinanceiro'
 import { KPI } from '../../components/ui/KPI'
 import { SkeletonKPI } from '../../components/ui/Skeleton'
 import { Cashflow } from './Cashflow'
 import { ContasPagar } from './ContasPagar'
 import { ContasReceber } from './ContasReceber'
 import { DRE } from './DRE'
+import { Lancamentos } from './Lancamentos'
 import { ModalLancamento } from './ModalLancamento'
 
 const TABS = [
-  { key: 'cashflow', label: 'Fluxo de Caixa'  },
-  { key: 'pagar',    label: 'Contas a Pagar'   },
-  { key: 'receber',  label: 'Contas a Receber' },
-  { key: 'dre',      label: 'DRE'              },
+  { key: 'cashflow',    label: 'Fluxo de Caixa'  },
+  { key: 'pagar',       label: 'Contas a Pagar'   },
+  { key: 'receber',     label: 'Contas a Receber' },
+  { key: 'lancamentos', label: 'Lançamentos'      },
+  { key: 'dre',         label: 'DRE'              },
 ]
 
 export function Financeiro() {
@@ -24,11 +26,12 @@ export function Financeiro() {
   const [refreshing, setRefreshing] = useState(false)
 
   // ── Hooks de dados ───────────────────────────────────────────────────────
-  const cashflow   = useCashflow()
-  const pagar      = useContasPagar()
-  const receber    = useContasReceber()
-  const dre        = useDRE()
-  const lancamento = useLancamento()
+  const cashflow    = useCashflow()
+  const pagar       = useContasPagar()
+  const receber     = useContasReceber()
+  const dre         = useDRE()
+  const lancamento  = useLancamento()
+  const lancamentos = useLancamentos()
   const { data: resumoFin, execute: refetchResumo } = useResumoFinanceiro()
 
   const loadingKPIs = cashflow.loading || pagar.loading
@@ -40,7 +43,7 @@ export function Financeiro() {
 
   const handleRefetchAll = async () => {
     setRefreshing(true)
-    await Promise.all([cashflow.execute(), pagar.refetch(), receber.refetch(), dre.execute(), refetchResumo()])
+    await Promise.all([cashflow.execute(), pagar.refetch(), receber.refetch(), dre.execute(), lancamentos.refetch(), refetchResumo()])
     setRefreshing(false)
   }
 
@@ -124,6 +127,15 @@ export function Financeiro() {
       )}
       {tab === 'dre' && (
         <DRE data={dre.data} loading={dre.loading} error={dre.error} onRefetch={dre.execute} />
+      )}
+      {tab === 'lancamentos' && (
+        <Lancamentos
+          lancamentos={lancamentos.lancamentos}
+          total={lancamentos.total}
+          loading={lancamentos.loading}
+          error={lancamentos.error}
+          onRefetch={lancamentos.refetch}
+        />
       )}
 
       {showModal && (
