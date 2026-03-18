@@ -1,24 +1,33 @@
 import { TrendingUp, TrendingDown, Boxes, AlertTriangle, ArrowDown, ArrowUp, RefreshCw, ChevronRight } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { C } from '../../constants/theme'
-import { movimentos, cashflowData, STATUS_FIN } from '../../data/mock'
 import { fmtBRL } from '../../utils/format'
 import { useProdutos } from '../../hooks/useProdutos'
-import { useContasPagar } from '../../hooks/useFinanceiro'
+import { useContasPagar, useCashflow, useResumoFinanceiro } from '../../hooks/useFinanceiro'
+import { useMovimentos } from '../../hooks/useMovimentos'
 import { KPI } from '../../components/ui/KPI'
 import { SkeletonKPI } from '../../components/ui/Skeleton'
 import { Card } from '../../components/ui/Card'
 import { ChartTooltip } from '../../components/ui/ChartTooltip'
 import { PainelAlertas } from './PainelAlertas'
 
+const STATUS_FIN = {
+  pendente: { color: C.yellow },
+  vencido:  { color: C.red },
+  pago:     { color: C.accent },
+}
+
 export function Dashboard({ setPage }) {
   const { produtos, resumo, loading: loadProd, refetch: refetchProd } = useProdutos()
   const { contas: contasPagar, loading: loadFin, refetch: refetchFin } = useContasPagar()
+  const { data: cashflowData = [], loading: loadCash, execute: refetchCash } = useCashflow()
+  const { movimentos, loading: loadMov, refetch: refetchMov } = useMovimentos()
+  const { data: resumoFin, loading: loadResumo, execute: refetchResumo } = useResumoFinanceiro()
 
-  const loading = loadProd || loadFin
+  const loading = loadProd || loadFin || loadCash || loadMov || loadResumo
 
   const handleRefresh = async () => {
-    await Promise.all([refetchProd(), refetchFin()])
+    await Promise.all([refetchProd(), refetchFin(), refetchCash(), refetchMov(), refetchResumo()])
   }
 
   return (
@@ -37,12 +46,12 @@ export function Dashboard({ setPage }) {
         {loading
           ? Array.from({ length: 4 }).map((_, i) => <SkeletonKPI key={i} />)
           : <>
-              <KPI label="Receita Mar"   value={fmtBRL(53000)}              sub="↑ 15% vs fev"             color={C.accent}  icon={TrendingUp}   />
-              <KPI label="Despesas Mar"  value={fmtBRL(31000)}              sub="↓ 3% vs fev"              color={C.blue}    icon={TrendingDown} />
-              <KPI label="Val. Estoque"  value={fmtBRL(resumo.valorTotal)}  sub={`${resumo.totalSkus} produtos`} color={C.yellow} icon={Boxes} />
-              <KPI label="Alertas"       value={resumo.alertas + contasPagar.filter(c => c.status === 'vencido').length}
-                sub="estoque + financeiro" color={C.red} icon={AlertTriangle} />
-            </>
+            <KPI label="Receita Mar" value={fmtBRL(resumoFin?.receita || 0)} sub="↑ 15% vs fev" color={C.accent} icon={TrendingUp} />
+            <KPI label="Despesas Mar" value={fmtBRL(resumoFin?.despesas || 0)} sub="↓ 3% vs fev" color={C.blue} icon={TrendingDown} />
+            <KPI label="Val. Estoque" value={fmtBRL(resumo.valorTotal)} sub={`${resumo.totalSkus} produtos`} color={C.yellow} icon={Boxes} />
+            <KPI label="Alertas" value={resumo.alertas + contasPagar.filter(c => c.status === 'vencido').length}
+              sub="estoque + financeiro" color={C.red} icon={AlertTriangle} />
+          </>
         }
       </div>
 
@@ -59,11 +68,11 @@ export function Dashboard({ setPage }) {
             <AreaChart data={cashflowData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="gr" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor={C.accent} stopOpacity={0.25} />
+                  <stop offset="5%" stopColor={C.accent} stopOpacity={0.25} />
                   <stop offset="95%" stopColor={C.accent} stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="gb" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor={C.blue} stopOpacity={0.2} />
+                  <stop offset="5%" stopColor={C.blue} stopOpacity={0.2} />
                   <stop offset="95%" stopColor={C.blue} stopOpacity={0} />
                 </linearGradient>
               </defs>
@@ -72,7 +81,7 @@ export function Dashboard({ setPage }) {
               <YAxis tick={{ fill: C.muted, fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `${v / 1000}k`} />
               <Tooltip content={<ChartTooltip />} />
               <Area type="monotone" dataKey="receitas" name="Receitas" stroke={C.accent} fill="url(#gr)" strokeWidth={2} dot={false} />
-              <Area type="monotone" dataKey="despesas" name="Despesas" stroke={C.blue}   fill="url(#gb)" strokeWidth={2} dot={false} />
+              <Area type="monotone" dataKey="despesas" name="Despesas" stroke={C.blue} fill="url(#gb)" strokeWidth={2} dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         </Card>
@@ -104,7 +113,7 @@ export function Dashboard({ setPage }) {
                 }}>
                   {m.tipo === 'entrada' ? <ArrowDown size={13} color={C.accent} />
                     : m.tipo === 'saida' ? <ArrowUp size={13} color={C.red} />
-                    : <RefreshCw size={13} color={C.yellow} />}
+                      : <RefreshCw size={13} color={C.yellow} />}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.produto}</div>

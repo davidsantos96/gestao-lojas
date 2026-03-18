@@ -4,12 +4,17 @@ import { getProdutos, getProduto, createProduto, updateProduto, deleteProduto } 
 import { CATEGORIA_API_TO_LABEL, CATEGORIA_LABEL_TO_API } from '../services/api'
 import { produtos as MOCK_PRODUTOS } from '../data/mock'
 
-const USE_MOCK = !import.meta.env.VITE_API_URL
+const USE_MOCK = false // !import.meta.env.VITE_API_URL
 
 // Normaliza produto da API para o formato do frontend
 function normalizarProduto(p) {
+  let status = 'ok'
+  if (p.estoque === 0) status = 'out'
+  else if (p.estoque <= (p.minimo || 5)) status = 'low'
+
   return {
     ...p,
+    status,
     categoria: CATEGORIA_API_TO_LABEL[p.categoria] ?? p.categoria,
   }
 }

@@ -19,7 +19,7 @@ import {
   dreData       as MOCK_DRE,
 } from '../data/mock'
 
-const USE_MOCK = import.meta.env.VITE_API_URL === undefined
+const USE_MOCK = false // import.meta.env.VITE_API_URL === undefined
 
 // ─── Resumo ───────────────────────────────────────────────────────────────────
 export function useResumoFinanceiro() {

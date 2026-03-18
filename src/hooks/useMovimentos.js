@@ -4,7 +4,7 @@ import { getMovimentos, createMovimento } from '../services/estoqueService'
 import { TIPO_MOV_TO_API } from '../services/api'
 import { movimentos as MOCK_MOVIMENTOS } from '../data/mock'
 
-const USE_MOCK = !import.meta.env.VITE_API_URL
+const USE_MOCK = false // !import.meta.env.VITE_API_URL
 
 export function useMovimentos(params = {}) {
   const fetchFn = useCallback(() => {
