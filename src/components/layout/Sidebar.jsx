@@ -1,8 +1,9 @@
 import {
   LayoutDashboard, Boxes, Wallet, ShoppingCart,
-  Users, FileText, BarChart2, ChevronRight,
+  Users, FileText, BarChart2, LogOut,
 } from 'lucide-react'
 import { C } from '../../constants/theme'
+import { useAuth } from '../../hooks/useAuth'
 
 const ICON_MAP = { LayoutDashboard, Boxes, Wallet, ShoppingCart, Users, FileText, BarChart2 }
 
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
 ]
 
 export function Sidebar({ page, setPage }) {
+  const { usuario, logout } = useAuth()
   return (
     <aside style={{
       width: 220, flexShrink: 0, background: C.surface,
@@ -81,14 +83,31 @@ export function Sidebar({ page, setPage }) {
             width: 30, height: 30, borderRadius: 8,
             background: 'rgba(0,217,168,.15)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 12, fontWeight: 700, color: C.accent,
+            fontSize: 12, fontWeight: 700, color: C.accent, flexShrink: 0,
           }}>
-            AL
+            {usuario?.nome?.slice(0, 2).toUpperCase() ?? '?'}
           </div>
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: C.text }}>Ana Lima</div>
-            <div style={{ fontSize: 10, color: C.muted }}>Administrador</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {usuario?.nome ?? ''}
+            </div>
+            <div style={{ fontSize: 10, color: C.muted, textTransform: 'capitalize' }}>
+              {usuario?.perfil?.toLowerCase() ?? ''}
+            </div>
           </div>
+          <button
+            onClick={logout}
+            title="Sair"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: 4, borderRadius: 6, display: 'flex', alignItems: 'center',
+              color: C.muted, flexShrink: 0,
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = C.red}
+            onMouseLeave={e => e.currentTarget.style.color = C.muted}
+          >
+            <LogOut size={14} />
+          </button>
         </div>
       </div>
     </aside>
