@@ -1,33 +1,53 @@
 import { fmtBRL } from '../../utils/format'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { ErrorState } from '../../components/ui/ErrorState'
-import { EmptyState } from '../../components/ui/EmptyState'
 
 const TIPO_STYLE = {
   RECEITA: { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-400' },
   DESPESA: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-400' },
 }
 
-export function Lancamentos({ lancamentos = [], total = 0, loading, error, onRefetch }) {
+export function Lancamentos({ titulo, lancamentos = [], total = 0, loading, error, onRefetch }) {
+  const sectionStyle = {
+    marginTop: 28,
+    paddingTop: 20,
+    borderTop: '1px solid rgba(255,255,255,0.06)',
+  }
+
+  const headerStyle = {
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: '#6b7280',
+    fontFamily: 'monospace',
+    marginBottom: 14,
+  }
+
   if (loading) return (
-    <div className="space-y-3">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <Skeleton key={i} className="h-14 w-full rounded-xl" />
-      ))}
+    <div style={sectionStyle}>
+      {titulo && <p style={headerStyle}>{titulo}</p>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-14 w-full rounded-xl" />
+        ))}
+      </div>
     </div>
   )
 
   if (error) return (
-    <ErrorState message={error} onRetry={onRefetch} />
+    <div style={sectionStyle}>
+      {titulo && <p style={headerStyle}>{titulo}</p>}
+      <ErrorState message={error} onRetry={onRefetch} />
+    </div>
   )
 
-  if (!lancamentos.length) return (
-    <EmptyState message="Nenhum lançamento encontrado." />
-  )
+  if (!lancamentos.length) return null
 
   return (
-    <div className="space-y-3">
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">{total} lançamento{total !== 1 ? 's' : ''}</p>
+    <div style={sectionStyle}>
+      {titulo && <p style={headerStyle}>{titulo} <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: 'none' }}>({total})</span></p>}
+      <p style={{ display: 'none' }}>{total} lançamento{total !== 1 ? 's' : ''}</p>
 
       <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700">
         <table className="min-w-full text-sm">

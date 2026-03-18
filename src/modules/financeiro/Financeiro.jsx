@@ -13,11 +13,10 @@ import { Lancamentos } from './Lancamentos'
 import { ModalLancamento } from './ModalLancamento'
 
 const TABS = [
-  { key: 'cashflow',    label: 'Fluxo de Caixa'  },
-  { key: 'pagar',       label: 'Contas a Pagar'   },
-  { key: 'receber',     label: 'Contas a Receber' },
-  { key: 'lancamentos', label: 'Lançamentos'      },
-  { key: 'dre',         label: 'DRE'              },
+  { key: 'cashflow', label: 'Fluxo de Caixa'  },
+  { key: 'pagar',    label: 'Contas a Pagar'   },
+  { key: 'receber',  label: 'Contas a Receber' },
+  { key: 'dre',      label: 'DRE'              },
 ]
 
 export function Financeiro() {
@@ -30,8 +29,9 @@ export function Financeiro() {
   const pagar       = useContasPagar()
   const receber     = useContasReceber()
   const dre         = useDRE()
-  const lancamento  = useLancamento()
-  const lancamentos = useLancamentos()
+  const lancamento        = useLancamento()
+  const lancamentosDespesa = useLancamentos({ tipo: 'DESPESA' })
+  const lancamentosReceita = useLancamentos({ tipo: 'RECEITA' })
   const { data: resumoFin, execute: refetchResumo } = useResumoFinanceiro()
 
   const loadingKPIs = cashflow.loading || pagar.loading
@@ -43,7 +43,7 @@ export function Financeiro() {
 
   const handleRefetchAll = async () => {
     setRefreshing(true)
-    await Promise.all([cashflow.execute(), pagar.refetch(), receber.refetch(), dre.execute(), lancamentos.refetch(), refetchResumo()])
+    await Promise.all([cashflow.execute(), pagar.refetch(), receber.refetch(), dre.execute(), lancamentosDespesa.refetch(), lancamentosReceita.refetch(), refetchResumo()])
     setRefreshing(false)
   }
 
@@ -112,32 +112,42 @@ export function Financeiro() {
         <Cashflow data={cashflow.data} loading={cashflow.loading} error={cashflow.error} onRefetch={cashflow.execute} />
       )}
       {tab === 'pagar' && (
-        <ContasPagar
-          contas={pagar.contas} totalPendente={pagar.totalPendente}
-          loading={pagar.loading} error={pagar.error}
-          onRefetch={pagar.refetch} onPagar={pagar.pagar}
-        />
+        <>
+          <ContasPagar
+            contas={pagar.contas} totalPendente={pagar.totalPendente}
+            loading={pagar.loading} error={pagar.error}
+            onRefetch={pagar.refetch} onPagar={pagar.pagar}
+          />
+          <Lancamentos
+            titulo="Lançamentos de Despesa"
+            lancamentos={lancamentosDespesa.lancamentos}
+            total={lancamentosDespesa.total}
+            loading={lancamentosDespesa.loading}
+            error={lancamentosDespesa.error}
+            onRefetch={lancamentosDespesa.refetch}
+          />
+        </>
       )}
       {tab === 'receber' && (
-        <ContasReceber
-          contas={receber.contas} totalPendente={receber.totalPendente}
-          loading={receber.loading} error={receber.error}
-          onRefetch={receber.refetch} onReceber={receber.receber}
-        />
+        <>
+          <ContasReceber
+            contas={receber.contas} totalPendente={receber.totalPendente}
+            loading={receber.loading} error={receber.error}
+            onRefetch={receber.refetch} onReceber={receber.receber}
+          />
+          <Lancamentos
+            titulo="Lançamentos de Receita"
+            lancamentos={lancamentosReceita.lancamentos}
+            total={lancamentosReceita.total}
+            loading={lancamentosReceita.loading}
+            error={lancamentosReceita.error}
+            onRefetch={lancamentosReceita.refetch}
+          />
+        </>
       )}
       {tab === 'dre' && (
         <DRE data={dre.data} loading={dre.loading} error={dre.error} onRefetch={dre.execute} />
       )}
-      {tab === 'lancamentos' && (
-        <Lancamentos
-          lancamentos={lancamentos.lancamentos}
-          total={lancamentos.total}
-          loading={lancamentos.loading}
-          error={lancamentos.error}
-          onRefetch={lancamentos.refetch}
-        />
-      )}
-
       {showModal && (
         <ModalLancamento
           onClose={() => setShowModal(false)}
