@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Plus, ArrowUpRight, ArrowDownRight, DollarSign, AlertTriangle, RefreshCw } from 'lucide-react'
 import { C } from '../../constants/theme'
 import { fmtBRL } from '../../utils/format'
-import { useCashflow, useContasPagar, useContasReceber, useDRE, useLancamento } from '../../hooks/useFinanceiro'
+import { useCashflow, useContasPagar, useContasReceber, useDRE, useLancamento, useResumoFinanceiro } from '../../hooks/useFinanceiro'
 import { KPI } from '../../components/ui/KPI'
 import { SkeletonKPI } from '../../components/ui/Skeleton'
 import { Cashflow } from './Cashflow'
@@ -24,22 +24,23 @@ export function Financeiro() {
   const [refreshing, setRefreshing] = useState(false)
 
   // ── Hooks de dados ───────────────────────────────────────────────────────
-  const cashflow  = useCashflow()
-  const pagar     = useContasPagar()
-  const receber   = useContasReceber()
-  const dre       = useDRE()
+  const cashflow   = useCashflow()
+  const pagar      = useContasPagar()
+  const receber    = useContasReceber()
+  const dre        = useDRE()
   const lancamento = useLancamento()
+  const { data: resumoFin, execute: refetchResumo } = useResumoFinanceiro()
 
   const loadingKPIs = cashflow.loading || pagar.loading
 
-  // KPIs derivados
-  const receita  = cashflow.data?.at(-1)?.receitas ?? 53000
-  const despesas = cashflow.data?.at(-1)?.despesas ?? 31000
-  const saldo    = receita - despesas
+  // KPIs vindos da API
+  const receita  = resumoFin?.receita  ?? 0
+  const despesas = resumoFin?.despesas ?? 0
+  const saldo    = resumoFin?.saldo    ?? 0
 
   const handleRefetchAll = async () => {
     setRefreshing(true)
-    await Promise.all([cashflow.execute(), pagar.refetch(), receber.refetch(), dre.execute()])
+    await Promise.all([cashflow.execute(), pagar.refetch(), receber.refetch(), dre.execute(), refetchResumo()])
     setRefreshing(false)
   }
 

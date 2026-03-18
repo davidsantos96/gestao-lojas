@@ -35,7 +35,13 @@ export function ModalLancamento({ onClose, onSubmit }) {
     setLoading(true)
     setError(null)
     try {
-      await onSubmit?.({ ...form, valor: parseFloat(form.valor) })
+      const payload = {
+        tipo:      form.tipo.toUpperCase(),
+        descricao: form.descricao,
+        valor:     parseFloat(form.valor),
+        data:      form.data,
+      }
+      await onSubmit?.(payload)
       onClose()
     } catch (err) {
       setError(err?.message || 'Erro ao registrar lançamento.')
