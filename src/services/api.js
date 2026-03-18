@@ -1,6 +1,19 @@
 const BASE_URL  = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const TIMEOUT   = Number(import.meta.env.VITE_API_TIMEOUT) || 10000
-const EMPRESA_ID = import.meta.env.VITE_EMPRESA_ID || 'empresa-demo'
+
+// Retorna o empresaId do usuário logado (JWT) ou cai no fallback do .env
+function getEmpresaId() {
+  try {
+    const raw = localStorage.getItem('auth_usuario')
+    if (raw) {
+      const usuario = JSON.parse(raw)
+      if (usuario?.empresaId) return usuario.empresaId
+    }
+  } catch {
+    // JSON inválido — ignora
+  }
+  return import.meta.env.VITE_EMPRESA_ID || 'empresa-demo'
+}
 
 // ─── Erro tipado ──────────────────────────────────────────────────────────────
 export class ApiError extends Error {
@@ -33,7 +46,7 @@ async function request(path, options = {}) {
 
   const headers = {
     'Content-Type':  'application/json',
-    'x-empresa-id':  EMPRESA_ID,          // tenant header — futuro: virá do JWT
+    'x-empresa-id':  getEmpresaId(),       // tenant — extraído do usuário logado
     ...options.headers,
   }
 
@@ -61,7 +74,7 @@ async function upload(path, file) {
   const form = new FormData()
   form.append('file', file)
 
-  const headers = { 'x-empresa-id': EMPRESA_ID }
+  const headers = { 'x-empresa-id': getEmpresaId() }
   const token   = localStorage.getItem('auth_token')
   if (token) headers['Authorization'] = `Bearer ${token}`
 
