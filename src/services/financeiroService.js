@@ -77,8 +77,16 @@ export function getDRE(params = {}) {
 
 // ─── Lançamento genérico ──────────────────────────────────────────────────────
 /**
+ * GET /financeiro/lancamentos?tipo=RECEITA&data_de=2026-01-01&data_ate=2026-03-31&categoria_id=<id>&page=1&limit=50
+ * → { data, total, page, limit }
+ */
+export function getLancamentos(params = {}) {
+  return api.get('/financeiro/lancamentos', params)
+}
+
+/**
  * POST /financeiro/lancamentos
- * body: { tipo: 'receita'|'despesa', descricao, valor, data, categoria }
+ * body: { tipo: 'RECEITA'|'DESPESA', descricao, valor, data, categoria_id? }
  */
 export function createLancamento(data) {
   return api.post('/financeiro/lancamentos', data)
