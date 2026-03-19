@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { key: 'dashboard',  label: 'Dashboard',  icon: 'LayoutDashboard' },
   { key: 'estoque',    label: 'Estoque',     icon: 'Boxes'           },
   { key: 'financeiro', label: 'Financeiro',  icon: 'Wallet'          },
-  { key: 'vendas',     label: 'Vendas',      icon: 'ShoppingCart',   locked: true },
+  { key: 'vendas',     label: 'Vendas',      icon: 'ShoppingCart' },
   { key: 'clientes',   label: 'Clientes',    icon: 'Users',          locked: true },
   { key: 'fiscal',     label: 'Fiscal',      icon: 'FileText',       locked: true },
   { key: 'relatorios', label: 'Relatórios',  icon: 'BarChart2',      locked: true },

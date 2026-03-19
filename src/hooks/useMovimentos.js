@@ -42,6 +42,7 @@ export function useMovimentos(params = {}) {
         : Math.abs(Number(data.qtd)),
       origem: data.obs || undefined,
       obs:    data.obs || undefined,
+      motivo: data.motivo || undefined,
     }
 
     const novo = await createMovimento(payload)

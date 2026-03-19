@@ -5,6 +5,7 @@ import { Header } from './components/layout/Header'
 import { Dashboard } from './modules/dashboard/Dashboard'
 import { Estoque } from './modules/estoque/Estoque'
 import { Financeiro } from './modules/financeiro/Financeiro'
+import { Vendas } from './modules/vendas/Vendas'
 import { LoginPage } from './modules/auth/LoginPage'
 import { useAuth } from './hooks/useAuth'
 
@@ -56,6 +57,7 @@ export default function App() {
         <Header page={page} />
         <div style={{ padding: 32 }}>
           {page === 'dashboard'  && <Dashboard setPage={setPage} />}
+          {page === 'vendas'     && <Vendas />}
           {page === 'estoque'    && <Estoque />}
           {page === 'financeiro' && <Financeiro />}
         </div>

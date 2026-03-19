@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { X, Loader2 } from 'lucide-react'
 import { C } from '../../constants/theme'
 
-const INITIAL = { produto_id: '', tipo: 'entrada', qtd: '', obs: '' }
+const INITIAL = { produto_id: '', tipo: 'entrada', qtd: '', obs: '', motivo: '' }
 
 export function ModalMovimentacao({ produtos = [], onClose, onSubmit }) {
   const [form,    setForm]    = useState(INITIAL)
@@ -13,6 +13,7 @@ export function ModalMovimentacao({ produtos = [], onClose, onSubmit }) {
 
   const handleSubmit = async () => {
     if (!form.produto_id) { setError('Selecione um produto.'); return }
+    if (form.tipo === 'saida' && !form.motivo) { setError('Selecione o motivo da saída.'); return }
     if (!form.qtd || Number(form.qtd) <= 0) { setError('Informe uma quantidade válida.'); return }
     setLoading(true)
     setError(null)
@@ -91,6 +92,26 @@ export function ModalMovimentacao({ produtos = [], onClose, onSubmit }) {
               ))}
             </div>
           </div>
+
+          {/* Motivo da Saída */}
+          {form.tipo === 'saida' && (
+            <div>
+              <label style={labelStyle}>Motivo da Saída</label>
+              <select value={form.motivo} onChange={e => set('motivo', e.target.value)} disabled={loading} style={inputStyle}>
+                <option value="">Selecione...</option>
+                <option value="Venda">Venda</option>
+                <option value="Descarte">Descarte / Perda</option>
+                <option value="Uso Interno">Uso Interno</option>
+                <option value="Outro">Outro</option>
+              </select>
+
+              {form.motivo === 'Venda' && (
+                <div style={{ marginTop: 8, fontSize: 12, color: C.green, background: 'rgba(0,217,168,.1)', padding: '6px 10px', borderRadius: 6, border: `1px solid ${C.green}44` }}>
+                  Será registrado automaticamente no <b>Controle de Vendas</b>.
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Quantidade */}
           <div>
