@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
 import { login as loginApi, getMe, logoutApi } from '../services/authService'
+import { setAuthToken, invalidateCache } from '../services/api'
 import { useIdleTimer } from './useIdleTimer'
 import { C } from '../constants/theme'
 
@@ -44,8 +45,10 @@ export function AuthProvider({ children }) {
     setLoading(true)
     try {
       const res = await loginApi(email, senha)
-      localStorage.setItem('auth_token', res.token)
+      // Atualiza o token tanto no localStorage quanto no cache em memória do api.js
+      setAuthToken(res.token)
       localStorage.setItem('auth_usuario', JSON.stringify(res.usuario))
+      invalidateCache() // limpa cache de sessão anterior
       setUsuario(res.usuario)
       return res
     } catch (err) {
@@ -62,8 +65,9 @@ export function AuthProvider({ children }) {
     clearInterval(countdownRef.current)
     setShowIdleWarn(false)
     try { await logoutApi() } catch { /* ignora */ } finally {
-      localStorage.removeItem('auth_token')
+      setAuthToken(null) // limpa token em memória + localStorage
       localStorage.removeItem('auth_usuario')
+      invalidateCache()  // limpa todo o cache ao sair
       setUsuario(null)
       setError(null)
     }
