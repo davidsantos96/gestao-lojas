@@ -7,8 +7,15 @@ const CATEGORIAS_RECEITA = ['Venda Balcão', 'Venda Online', 'Atacado', 'Outro']
 
 const INITIAL = { tipo: 'despesa', descricao: '', valor: '', data: '', categoria: '' }
 
-export function ModalLancamento({ onClose, onSubmit }) {
-  const [form,    setForm]    = useState(INITIAL)
+export function ModalLancamento({ lancamento, onClose, onSubmit }) {
+  const isEdit = !!lancamento
+  const [form,    setForm]    = useState(() => lancamento ? {
+    tipo:      (lancamento.tipo ?? 'DESPESA').toLowerCase(),
+    descricao: lancamento.descricao ?? '',
+    valor:     lancamento.valor ?? '',
+    data:      lancamento.data ? new Date(lancamento.data).toISOString().split('T')[0] : '',
+    categoria: lancamento.categoria?.nome ?? '',
+  } : INITIAL)
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
 
@@ -70,7 +77,7 @@ export function ModalLancamento({ onClose, onSubmit }) {
         </button>
 
         <div style={{ fontSize: 11, color: C.blue, fontFamily: 'monospace', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 8 }}>Financeiro</div>
-        <h3 style={{ fontSize: 18, fontWeight: 700, color: C.text, marginBottom: 24 }}>Novo Lançamento</h3>
+        <h3 style={{ fontSize: 18, fontWeight: 700, color: C.text, marginBottom: 24 }}>{isEdit ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
 
         {/* Tipo toggle */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, padding: 4, background: C.s2, borderRadius: 10, border: `1px solid ${C.border}` }}>
@@ -167,7 +174,7 @@ export function ModalLancamento({ onClose, onSubmit }) {
               cursor: loading ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}>
-              {loading ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Registrando...</> : 'Registrar'}
+              {loading ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> {isEdit ? 'Salvando...' : 'Registrando...'}</> : isEdit ? 'Salvar' : 'Registrar'}
             </button>
           </div>
         </div>

@@ -7,6 +7,10 @@ import {
   getContasReceber,
   getDRE,
   getLancamentos,
+  updateLancamento,
+  deleteLancamento,
+  createContaPagar,
+  createContaReceber,
   pagarConta,
   receberConta,
   createLancamento,
@@ -125,29 +129,56 @@ export function useDRE() {
 
 // ─── Lançamentos (lista) ────────────────────────────────────────────────────────
 export function useLancamentos(params = {}) {
-  const fetchFn = useCallback(() => getLancamentos(params), [JSON.stringify(params)]) // eslint-disable-line
+  const fetchFn = useCallback(() => {
+    if (USE_MOCK) return Promise.resolve({ data: [], total: 0 })
+    return getLancamentos(params)
+  }, [JSON.stringify(params)]) // eslint-disable-line
 
-  const { data: response, loading, error, execute: refetch } = useAsync(fetchFn)
+  const { data: response, loading, error, execute: refetch, setData: setResponse } = useAsync(fetchFn)
+  const lancamentos = response?.data ?? []
 
-  return {
-    lancamentos: response?.data ?? [],
-    total:       response?.total ?? 0,
-    loading,
-    error,
-    refetch,
-  }
+  const criar = useCallback(async (data) => {
+    if (USE_MOCK) {
+      const novo = { id: Date.now(), ...data }
+      setResponse(prev => ({ ...prev, data: [novo, ...(prev?.data ?? [])] }))
+      return novo
+    }
+    const novo = await createLancamento(data)
+    // Espelha em contas a pagar/receber para aparecer nas abas corretas
+    const isReceita = (data.tipo || '').toUpperCase() === 'RECEITA'
+    const vencimento = data.data || new Date().toISOString().split('T')[0]
+    if (isReceita) {
+      await createContaReceber({ descricao: data.descricao, valor: data.valor, vencimento, obs: data.obs }).catch(() => null)
+    } else {
+      await createContaPagar({ descricao: data.descricao, valor: data.valor, vencimento, categoria_id: data.categoria_id, obs: data.obs }).catch(() => null)
+    }
+    await refetch()
+    return novo
+  }, [refetch, setResponse])
+
+  const editar = useCallback(async (id, data) => {
+    if (USE_MOCK) {
+      setResponse(prev => ({ ...prev, data: prev.data.map(l => l.id === id ? { ...l, ...data } : l) }))
+      return
+    }
+    await updateLancamento(id, data)
+    await refetch()
+  }, [refetch, setResponse])
+
+  const remover = useCallback(async (id) => {
+    if (USE_MOCK) {
+      setResponse(prev => ({ ...prev, data: prev.data.filter(l => l.id !== id) }))
+      return
+    }
+    await deleteLancamento(id)
+    await refetch()
+  }, [refetch, setResponse])
+
+  return { lancamentos, total: response?.total ?? 0, loading, error, refetch, criar, editar, remover }
 }
 
-// ─── Criar lançamento ────────────────────────────────────────────────────────
-// (mantido como useLancamento para não quebrar Financeiro.jsx)
+// Compatibilidade retroativa
 export function useLancamento() {
-  const { loading, error, execute } = useAsync(
-    useCallback((data) => {
-      if (USE_MOCK) return Promise.resolve({ id: Date.now(), ...data })
-      return createLancamento(data)
-    }, []),
-    { immediate: false }
-  )
-
-  return { loading, error, criar: execute }
+  const { criar, loading, error } = useLancamentos()
+  return { loading, error, criar }
 }

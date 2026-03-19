@@ -91,3 +91,7 @@ export function getLancamentos(params = {}) {
 export function createLancamento(data) {
   return api.post('/financeiro/lancamentos', data)
 }
+
+export function updateLancamento(id, data) { return api.put(`/financeiro/lancamentos/${id}`, data) }
+
+export function deleteLancamento(id) { return api.delete(`/financeiro/lancamentos/${id}`) }

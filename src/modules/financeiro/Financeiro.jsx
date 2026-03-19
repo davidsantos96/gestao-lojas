@@ -21,15 +21,16 @@ const TABS = [
 
 export function Financeiro() {
   const [tab,       setTab]       = useState('cashflow')
-  const [showModal,  setShowModal]  = useState(false)
-  const [refreshing, setRefreshing] = useState(false)
+  const [showModal,    setShowModal]    = useState(false)
+  const [refreshing,   setRefreshing]   = useState(false)
+  const [lancamentoEdit, setLancamentoEdit] = useState(null)
 
   // ── Hooks de dados ───────────────────────────────────────────────────────
   const cashflow    = useCashflow()
   const pagar       = useContasPagar()
   const receber     = useContasReceber()
   const dre         = useDRE()
-  const lancamento        = useLancamento()
+  const lancamentoHook    = useLancamentos()
   const lancamentosDespesa = useLancamentos({ tipo: 'DESPESA' })
   const lancamentosReceita = useLancamentos({ tipo: 'RECEITA' })
   const { data: resumoFin, execute: refetchResumo } = useResumoFinanceiro()
@@ -48,7 +49,12 @@ export function Financeiro() {
   }
 
   const handleNovoLancamento = async (data) => {
-    await lancamento.criar(data)
+    if (lancamentoEdit) {
+      await lancamentoHook.editar(lancamentoEdit.id, data)
+    } else {
+      await lancamentoHook.criar(data)
+    }
+    setLancamentoEdit(null)
     handleRefetchAll()
   }
 
@@ -125,6 +131,8 @@ export function Financeiro() {
             loading={lancamentosDespesa.loading}
             error={lancamentosDespesa.error}
             onRefetch={lancamentosDespesa.refetch}
+            onEditar={l => { setLancamentoEdit(l); setShowModal(true) }}
+            onRemover={id => lancamentoHook.remover(id).then(handleRefetchAll)}
           />
         </>
       )}
@@ -142,6 +150,8 @@ export function Financeiro() {
             loading={lancamentosReceita.loading}
             error={lancamentosReceita.error}
             onRefetch={lancamentosReceita.refetch}
+            onEditar={l => { setLancamentoEdit(l); setShowModal(true) }}
+            onRemover={id => lancamentoHook.remover(id).then(handleRefetchAll)}
           />
         </>
       )}
@@ -150,7 +160,8 @@ export function Financeiro() {
       )}
       {showModal && (
         <ModalLancamento
-          onClose={() => setShowModal(false)}
+          lancamento={lancamentoEdit}
+          onClose={() => { setShowModal(false); setLancamentoEdit(null) }}
           onSubmit={handleNovoLancamento}
         />
       )}
