@@ -84,8 +84,10 @@ export function Lancamentos({ titulo, lancamentos = [], total = 0, loading, erro
                             padding: '5px 7px', borderRadius: 6, cursor: 'pointer', transition: 'all .15s',
                             background: confirmando === l.id ? 'rgba(255,91,107,.15)' : C.s2,
                             border: `1px solid ${confirmando === l.id ? C.red : 'rgba(255,91,107,.3)'}`,
+                            display: 'flex', alignItems: 'center', gap: confirmando === l.id ? 4 : 0
                           }}>
                           <Trash2 size={13} color={C.red} />
+                          {confirmando === l.id && <span style={{ fontSize: 10, color: C.red, fontWeight: 600 }}>Confirmar?</span>}
                         </button>
                       )}
                     </div>

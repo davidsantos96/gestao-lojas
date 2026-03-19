@@ -9,13 +9,28 @@ const INITIAL = { tipo: 'despesa', descricao: '', valor: '', data: '', categoria
 
 export function ModalLancamento({ lancamento, onClose, onSubmit }) {
   const isEdit = !!lancamento
-  const [form,    setForm]    = useState(() => lancamento ? {
-    tipo:      (lancamento.tipo ?? 'DESPESA').toLowerCase(),
-    descricao: lancamento.descricao ?? '',
-    valor:     lancamento.valor ?? '',
-    data:      lancamento.data ? new Date(lancamento.data).toISOString().split('T')[0] : '',
-    categoria: lancamento.categoria?.nome ?? '',
-  } : INITIAL)
+  const [form,    setForm]    = useState(() => {
+    if (!lancamento) return INITIAL
+    
+    let formattedDate = ''
+    if (lancamento.data) {
+      if (lancamento.data.includes('/')) {
+        formattedDate = lancamento.data.split('/').reverse().join('-')
+      } else {
+        try {
+          formattedDate = new Date(lancamento.data).toISOString().split('T')[0]
+        } catch(e) { /* ignore */ }
+      }
+    }
+
+    return {
+      tipo:      (lancamento.tipo ?? 'DESPESA').toLowerCase(),
+      descricao: lancamento.descricao ?? '',
+      valor:     lancamento.valor ?? '',
+      data:      formattedDate,
+      categoria: lancamento.categoria ?? '',
+    }
+  })
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
 
@@ -49,6 +64,7 @@ export function ModalLancamento({ lancamento, onClose, onSubmit }) {
         descricao: form.descricao,
         valor:     parseFloat(form.valor),
         data:      form.data,
+        categoria_id: form.categoria || undefined,
       }
       await onSubmit?.(payload)
       onClose()
