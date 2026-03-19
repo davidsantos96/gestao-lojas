@@ -58,7 +58,9 @@ export function Lancamentos({ titulo, lancamentos = [], total = 0, loading, erro
           <tbody>
             {lancamentos.map((l, i) => {
               const cfg  = TIPO_CFG[l.tipo] ?? TIPO_CFG.DESPESA
-              const data = l.data ? new Date(l.data).toLocaleDateString('pt-BR') : '—'
+              const data = l.data 
+                ? (l.data.includes('/') ? l.data : l.data.split('T')[0].split('-').reverse().join('/'))
+                : '—'
               return (
                 <tr key={l.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.015)' }}>
                   <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{data}</td>
