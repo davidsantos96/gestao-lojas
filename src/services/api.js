@@ -1,6 +1,52 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 const TIMEOUT  = Number(import.meta.env.VITE_API_TIMEOUT) || 10000
 
+// ─── Cache em memória (GET) ───────────────────────────────────────────────────
+const TTL_MAP = {
+  '/financeiro/resumo':    60_000,   // 1 min
+  '/financeiro/cashflow':  120_000,  // 2 min
+  '/financeiro/dre':       120_000,
+  '/estoque/resumo':       60_000,
+  '/vendas':               30_000,
+  '/financeiro/lancamentos': 30_000,
+  '/financeiro/categorias':  300_000, // 5 min (raramente muda)
+}
+
+const _cache = new Map()
+
+function cacheKey(url) { return url }
+
+function fromCache(url) {
+  const entry = _cache.get(cacheKey(url))
+  if (!entry) return null
+  if (Date.now() > entry.expiresAt) { _cache.delete(cacheKey(url)); return null }
+  return entry.data
+}
+
+function toCache(url, data) {
+  const path    = url.replace(BASE_URL, '').split('?')[0]
+  const ttl     = Object.entries(TTL_MAP).find(([k]) => path.startsWith(k))?.[1]
+  if (!ttl) return
+  _cache.set(cacheKey(url), { data, expiresAt: Date.now() + ttl })
+}
+
+export function invalidateCache(prefix = '') {
+  for (const key of _cache.keys()) {
+    if (!prefix || key.includes(prefix)) _cache.delete(key)
+  }
+}
+
+// ─── Token em módulo (evita ler localStorage a cada request) ─────────────────
+let _cachedToken = localStorage.getItem('auth_token')
+
+window.addEventListener('auth:logout', () => { _cachedToken = null })
+
+export function setAuthToken(token) {
+  _cachedToken = token
+  if (token) localStorage.setItem('auth_token', token)
+  else { localStorage.removeItem('auth_token'); localStorage.removeItem('auth_usuario') }
+}
+
 // ─── Erro tipado ──────────────────────────────────────────────────────────────
 export class ApiError extends Error {
   constructor(message, status, data = null) {
@@ -29,21 +75,21 @@ async function fetchWithTimeout(url, options = {}) {
 // ─── Request base ─────────────────────────────────────────────────────────────
 async function request(path, options = {}) {
   const url = `${BASE_URL}${path}`
+  const isGet = !options.method || options.method === 'GET'
 
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers,
+  // Retorna do cache sem fazer fetch
+  if (isGet) {
+    const cached = fromCache(url)
+    if (cached) return cached
   }
 
-  const token = localStorage.getItem('auth_token')
-  if (token) headers['Authorization'] = `Bearer ${token}`
+  const headers = { 'Content-Type': 'application/json', ...options.headers }
+  if (_cachedToken) headers['Authorization'] = `Bearer ${_cachedToken}`
 
   const res = await fetchWithTimeout(url, { ...options, headers })
 
-  // Token expirado ou inválido — limpa sessão e força re-login
   if (res.status === 401) {
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('auth_usuario')
+    setAuthToken(null)
     window.dispatchEvent(new Event('auth:logout'))
   }
 
@@ -57,6 +103,9 @@ async function request(path, options = {}) {
     const message = body?.message || body?.error || `Erro ${res.status}`
     throw new ApiError(message, res.status, body)
   }
+
+  if (isGet) toCache(url, body)
+  else invalidateCache() // mutação → invalida todo o cache
 
   return body
 }

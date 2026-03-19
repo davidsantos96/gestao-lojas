@@ -1,13 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { C } from './constants/theme'
 import { Sidebar } from './components/layout/Sidebar'
 import { Header } from './components/layout/Header'
-import { Dashboard } from './modules/dashboard/Dashboard'
-import { Estoque } from './modules/estoque/Estoque'
-import { Financeiro } from './modules/financeiro/Financeiro'
-import { Vendas } from './modules/vendas/Vendas'
 import { LoginPage } from './modules/auth/LoginPage'
 import { useAuth } from './hooks/useAuth'
+import { SkeletonTable } from './components/ui/Skeleton'
+
+// Lazy loading — cada módulo só é baixado quando acessado pela primeira vez
+const Dashboard  = lazy(() => import('./modules/dashboard/Dashboard').then(m => ({ default: m.Dashboard })))
+const Estoque    = lazy(() => import('./modules/estoque/Estoque').then(m => ({ default: m.Estoque })))
+const Financeiro = lazy(() => import('./modules/financeiro/Financeiro').then(m => ({ default: m.Financeiro })))
+const Vendas     = lazy(() => import('./modules/vendas/Vendas').then(m => ({ default: m.Vendas })))
+
+function ModuleFallback() {
+  return <div><SkeletonTable rows={6} cols={5} /></div>
+}
 
 export default function App() {
   const [page, setPage] = useState('dashboard')
@@ -77,10 +84,12 @@ export default function App() {
       <main style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
         <Header page={page} onToggleSidebar={() => setSidebarOpen(o => !o)} sidebarOpen={sidebarOpen} />
         <div style={{ padding: '24px 20px' }} className="main-content">
-          {page === 'dashboard'  && <Dashboard setPage={navigate} />}
-          {page === 'vendas'     && <Vendas />}
-          {page === 'estoque'    && <Estoque />}
-          {page === 'financeiro' && <Financeiro />}
+          <Suspense fallback={<ModuleFallback />}>
+            {page === 'dashboard'  && <Dashboard setPage={navigate} />}
+            {page === 'vendas'     && <Vendas />}
+            {page === 'estoque'    && <Estoque />}
+            {page === 'financeiro' && <Financeiro />}
+          </Suspense>
         </div>
       </main>
 

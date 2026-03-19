@@ -1,4 +1,13 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+
+function useDebounce(value, delay = 250) {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay)
+    return () => clearTimeout(id)
+  }, [value, delay])
+  return debounced
+}
 import { ShoppingCart, Search, TrendingUp, TrendingDown, Minus, ReceiptText } from 'lucide-react'
 import { C } from '../../constants/theme'
 import { fmtBRL, fmtPct } from '../../utils/format'
@@ -133,15 +142,20 @@ function CardResumoMes() {
 // ── Módulo principal ──────────────────────────────────────────────────────────
 export function Vendas() {
   const [busca, setBusca] = useState('')
+  const buscaDebounced = useDebounce(busca, 250)
   const { vendas, loading, error, refetch } = useVendas()
+
+  const filtradas = useMemo(() => {
+    if (!buscaDebounced) return vendas
+    const q = buscaDebounced.toLowerCase()
+    return vendas.filter(v =>
+      v.produto_nome.toLowerCase().includes(q) ||
+      v.produto_sku.toLowerCase().includes(q)
+    )
+  }, [vendas, buscaDebounced])
 
   if (loading) return <div><SkeletonTable rows={8} cols={7} /></div>
   if (error) return <ErrorState error={error} onRetry={refetch} />
-
-  const filtradas = vendas.filter(v =>
-    v.produto_nome.toLowerCase().includes(busca.toLowerCase()) ||
-    v.produto_sku.toLowerCase().includes(busca.toLowerCase())
-  )
 
   return (
     <div>
