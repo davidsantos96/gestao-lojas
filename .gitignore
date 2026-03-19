@@ -6,3 +6,7 @@ dist/
 *.log
 .DS_Store
 .vite/
+
+# Scripts de teste temporários
+fetch-test.js
+check-routes.js

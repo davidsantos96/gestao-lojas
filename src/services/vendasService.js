@@ -1,5 +1,5 @@
 import { api } from './api'
 
 export function getVendas(params = {}) {
-  return api.get('/vendas', { params }).then(res => res.data)
+  return api.get('/vendas', params)
 }
