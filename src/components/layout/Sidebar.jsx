@@ -11,21 +11,32 @@ const NAV_ITEMS = [
   { key: 'dashboard',  label: 'Dashboard',  icon: 'LayoutDashboard' },
   { key: 'estoque',    label: 'Estoque',     icon: 'Boxes'           },
   { key: 'financeiro', label: 'Financeiro',  icon: 'Wallet'          },
-  { key: 'vendas',     label: 'Vendas',      icon: 'ShoppingCart' },
+  { key: 'vendas',     label: 'Vendas',      icon: 'ShoppingCart'    },
   { key: 'clientes',   label: 'Clientes',    icon: 'Users',          locked: true },
   { key: 'fiscal',     label: 'Fiscal',      icon: 'FileText',       locked: true },
   { key: 'relatorios', label: 'Relatórios',  icon: 'BarChart2',      locked: true },
 ]
 
-export function Sidebar({ page, setPage }) {
+export function Sidebar({ page, setPage, isOpen, onClose }) {
   const { usuario, logout } = useAuth()
+
   return (
     <aside style={{
-      width: 220, flexShrink: 0, background: C.surface,
-      borderRight: `1px solid ${C.border}`, display: 'flex',
-      flexDirection: 'column', position: 'sticky', top: 0,
-      height: '100vh', overflow: 'auto',
-    }}>
+      width: 220,
+      flexShrink: 0,
+      background: C.surface,
+      borderRight: `1px solid ${C.border}`,
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'sticky',
+      top: 0,
+      height: '100vh',
+      overflow: 'auto',
+      // Responsividade mobile: posição fixa fora da tela quando fechada
+      transition: 'transform .25s ease, width .25s ease',
+    }}
+    className={`app-sidebar ${isOpen ? 'sidebar-open' : 'sidebar-closed'}`}
+    >
       {/* Brand */}
       <div style={{ padding: '24px 20px 20px', borderBottom: `1px solid ${C.border}` }}>
         <div style={{ fontSize: 10, color: C.accent, fontFamily: 'monospace', letterSpacing: 3, marginBottom: 6 }}>
@@ -35,7 +46,7 @@ export function Sidebar({ page, setPage }) {
           Controle<br /><span style={{ color: C.accent }}>de Lojas</span>
         </div>
         <div style={{ fontSize: 10, color: C.muted, marginTop: 6, fontFamily: 'monospace' }}>
-          v1.0 · Loja Centro
+          v1.0 · {usuario?.empresaNome ?? 'Loja Centro'}
         </div>
       </div>
 
@@ -110,6 +121,36 @@ export function Sidebar({ page, setPage }) {
           </button>
         </div>
       </div>
+
+      {/* Estilos responsivos injetados uma única vez */}
+      <style>{`
+        @media (max-width: 767px) {
+          .app-sidebar {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            height: 100vh !important;
+            z-index: 50;
+          }
+          .app-sidebar.sidebar-closed {
+            transform: translateX(-100%);
+          }
+          .app-sidebar.sidebar-open {
+            transform: translateX(0);
+            box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+          }
+        }
+        @media (min-width: 768px) {
+          .app-sidebar.sidebar-closed {
+            width: 0 !important;
+            overflow: hidden;
+            border-right: none !important;
+          }
+          .app-sidebar.sidebar-open {
+            width: 220px;
+          }
+        }
+      `}</style>
     </aside>
   )
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { C } from './constants/theme'
 import { Sidebar } from './components/layout/Sidebar'
 import { Header } from './components/layout/Header'
@@ -12,6 +12,13 @@ import { useAuth } from './hooks/useAuth'
 export default function App() {
   const [page, setPage] = useState('dashboard')
   const { usuario, loading } = useAuth()
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768)
+
+  // Fecha a sidebar automaticamente em telas pequenas ao trocar de página
+  function navigate(p) {
+    setPage(p)
+    if (window.innerWidth < 768) setSidebarOpen(false)
+  }
 
   // Tela de carregamento durante verificação de sessão
   if (loading) {
@@ -50,18 +57,39 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: C.bg, color: C.text, fontFamily: 'system-ui, sans-serif' }}>
-      <Sidebar page={page} setPage={setPage} />
+    <div style={{ display: 'flex', minHeight: '100vh', background: C.bg, color: C.text, fontFamily: 'system-ui, sans-serif', position: 'relative' }}>
+      <Sidebar page={page} setPage={navigate} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <main style={{ flex: 1, overflow: 'auto' }}>
-        <Header page={page} />
-        <div style={{ padding: 32 }}>
-          {page === 'dashboard'  && <Dashboard setPage={setPage} />}
+      {/* Overlay escuro para mobile quando sidebar está aberta */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            display: 'none',
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
+            zIndex: 49,
+            // Visível apenas em mobile via CSS
+          }}
+          className="sidebar-overlay"
+        />
+      )}
+
+      <main style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
+        <Header page={page} onToggleSidebar={() => setSidebarOpen(o => !o)} sidebarOpen={sidebarOpen} />
+        <div style={{ padding: '24px 20px' }} className="main-content">
+          {page === 'dashboard'  && <Dashboard setPage={navigate} />}
           {page === 'vendas'     && <Vendas />}
           {page === 'estoque'    && <Estoque />}
           {page === 'financeiro' && <Financeiro />}
         </div>
       </main>
+
+      <style>{`
+        @media (max-width: 767px) {
+          .sidebar-overlay { display: block !important; }
+          .main-content { padding: 16px 12px !important; }
+        }
+      `}</style>
     </div>
   )
 }
