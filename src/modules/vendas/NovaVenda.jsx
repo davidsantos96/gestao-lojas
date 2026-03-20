@@ -288,14 +288,14 @@ export function NovaVenda({ produtos = [], onVendaConcluida }) {
               <div>
                 <label style={lbl}>Forma de Pagamento</label>
                 <select value={formaPagamento} onChange={e => setFormaPagamento(e.target.value)} style={{ ...inp, appearance: 'none' }}>
-                  {FORMAS_PAGAMENTO.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                  {FORMAS_PAGAMENTO.map(f => <option key={f.value} value={f.value} style={{ background: C.s2, color: C.text }}>{f.label}</option>)}
                 </select>
               </div>
               {formaPagamento === 'CARTAO_CREDITO' && (
                 <div>
                   <label style={lbl}>Parcelas</label>
                   <select value={parcelas} onChange={e => setParcelas(Number(e.target.value))} style={{ ...inp, appearance: 'none' }}>
-                    {[1,2,3,4,6,8,10,12].map(n => <option key={n} value={n}>{n === 1 ? 'À vista' : `${n}x`}</option>)}
+                    {[1, 2, 3, 4, 6, 8, 10, 12].map(n => <option key={n} value={n} style={{ background: C.s2, color: C.text }}>{n === 1 ? 'À vista' : `${n}x`}</option>)}
                   </select>
                 </div>
               )}
