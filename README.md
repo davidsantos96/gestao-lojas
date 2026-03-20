@@ -99,18 +99,25 @@ src/
 │   ├── dashboard/
 │   │   └── Dashboard.jsx       # KPIs, cashflow, alertas e atalhos
 │   ├── estoque/
-│   │   ├── Estoque.jsx         # Módulo principal (abas)
-│   │   ├── TabelaProdutos.jsx  # Listagem com filtros e CRUD
-│   │   ├── TabelaMovimentos.jsx
+│   │   ├── Estoque.jsx          # Módulo principal (abas)
+│   │   ├── TabelaProdutos.jsx   # Listagem com filtros e CRUD
+│   │   ├── TabelaMovimentos.jsx # Registro de entradas/saídas
+│   │   ├── ModalProduto.jsx     # Cadastro de produtos
 │   │   └── ModalMovimentacao.jsx
 │   ├── financeiro/
-│   │   ├── Financeiro.jsx      # Módulo principal (abas)
-│   │   ├── Cashflow.jsx        # Gráfico de fluxo de caixa mensal
-│   │   ├── ContasPagar.jsx     # Contas com ação de pagamento
-│   │   ├── ContasReceber.jsx
-│   │   └── DRE.jsx             # Demonstrativo de Resultado do Exercício
+│   │   ├── Financeiro.jsx       # Módulo principal (abas)
+│   │   ├── Cashflow.jsx         # Gráfico de fluxo de caixa mensal
+│   │   ├── Lancamentos.jsx      # Histórico detalhado de entradas/saídas
+│   │   ├── ContasPagar.jsx      # Gestão de dívidas
+│   │   ├── ContasReceber.jsx    # Gestão de créditos
+│   │   ├── DRE.jsx              # Demonstrativo de Resultado
+│   │   ├── ModalLancamento.jsx  # Criação/edição de lançamentos
+│   │   └── ModalAnexos.jsx      # Gestão de comprovantes
 │   └── vendas/
-│       └── Vendas.jsx          # Histórico de vendas + cards de resumo do mês
+│       ├── Vendas.jsx           # Hub do módulo (abas)
+│       ├── NovaVenda.jsx        # PDV completo (Lançamento de venda)
+│       ├── HistoricoVendas.jsx  # Histórico detalhado
+│       └── RelatorioVendas.jsx  # Analíticos e performance
 │
 ├── App.jsx                     # Roteamento, estado global de layout, idle logout
 └── main.jsx
@@ -122,10 +129,10 @@ src/
 
 | Módulo | Status | Descrição |
 |---|---|---|
-| **Dashboard** | ✅ Ativo | KPIs consolidados, cashflow, alertas de estoque |
-| **Estoque** | ✅ Ativo | Gestão de produtos e movimentações |
-| **Financeiro** | ✅ Ativo | Contas a pagar/receber, DRE, cashflow |
-| **Vendas** | ✅ Ativo | Histórico de vendas + total do mês |
+| **Dashboard** | ✅ Ativo | KPIs consolidados, cashflow e alertas críticos |
+| **Estoque** | ✅ Ativo | Gestão de catálogo, estoque mínimo e CRUD |
+| **Financeiro** | ✅ Ativo | Fluxo de caixa, Contas Pagar/Receber, Lançamentos e DRE |
+| **Vendas** | ✅ Ativo | PDV completo: Nova Venda, Histórico e Relatórios Analíticos |
 | **Clientes** | 🔜 Em breve | — |
 | **Fiscal** | 🔜 Em breve | — |
 | **Relatórios** | 🔜 Em breve | — |
