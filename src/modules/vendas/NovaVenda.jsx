@@ -12,6 +12,7 @@ const inp = {
   background: 'rgba(255,255,255,.04)', border: `1px solid ${C.border}`,
   borderRadius: 9, color: C.text, fontSize: 13, outline: 'none',
   transition: 'border-color .15s', boxSizing: 'border-box',
+  colorScheme: 'dark',
 }
 const lbl = {
   fontSize: 10, color: C.muted, fontFamily: 'monospace',
