@@ -1,10 +1,13 @@
-import { useState, useEffect, lazy, Suspense } from 'react'
-import { C } from './constants/theme'
+import { useState, lazy, Suspense } from 'react'
 import { Sidebar } from './components/layout/Sidebar'
 import { Header } from './components/layout/Header'
 import { LoginPage } from './modules/auth/LoginPage'
 import { useAuth } from './hooks/useAuth'
 import { SkeletonTable } from './components/ui/Skeleton'
+import {
+  LoadingContainer, LoadingBox, LoadingIconWrap, Spinner,
+  AppContainer, SidebarOverlay, MainArea, MainContent
+} from './AppStyles'
 
 // Lazy loading — cada módulo só é baixado quando acessado pela primeira vez
 const Dashboard  = lazy(() => import('./modules/dashboard/Dashboard').then(m => ({ default: m.Dashboard })))
@@ -30,31 +33,14 @@ export default function App() {
   // Tela de carregamento durante verificação de sessão
   if (loading) {
     return (
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        minHeight: '100vh', background: C.bg, color: C.muted,
-        fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14,
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: 10,
-            background: `${C.accent}18`, border: `1px solid ${C.accent}30`,
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            marginBottom: 16, animation: 'pulse 1.5s ease-in-out infinite',
-          }}>
-            <div style={{
-              width: 16, height: 16, borderRadius: '50%',
-              border: `2px solid ${C.accent}`, borderTopColor: 'transparent',
-              animation: 'spin 0.8s linear infinite',
-            }} />
-          </div>
+      <LoadingContainer>
+        <LoadingBox>
+          <LoadingIconWrap>
+            <Spinner />
+          </LoadingIconWrap>
           <div>Carregando...</div>
-        </div>
-        <style>{`
-          @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-          @keyframes pulse { 0%,100%{opacity:0.6} 50%{opacity:1} }
-        `}</style>
-      </div>
+        </LoadingBox>
+      </LoadingContainer>
     )
   }
 
@@ -64,41 +50,25 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: C.bg, color: C.text, fontFamily: 'system-ui, sans-serif', position: 'relative' }}>
+    <AppContainer>
       <Sidebar page={page} setPage={navigate} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Overlay escuro para mobile quando sidebar está aberta */}
       {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          style={{
-            display: 'none',
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
-            zIndex: 49,
-            // Visível apenas em mobile via CSS
-          }}
-          className="sidebar-overlay"
-        />
+        <SidebarOverlay onClick={() => setSidebarOpen(false)} />
       )}
 
-      <main style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
+      <MainArea>
         <Header page={page} onToggleSidebar={() => setSidebarOpen(o => !o)} sidebarOpen={sidebarOpen} />
-        <div style={{ padding: '24px 20px' }} className="main-content">
+        <MainContent>
           <Suspense fallback={<ModuleFallback />}>
             {page === 'dashboard'  && <Dashboard setPage={navigate} />}
             {page === 'vendas'     && <Vendas />}
             {page === 'estoque'    && <Estoque />}
             {page === 'financeiro' && <Financeiro />}
           </Suspense>
-        </div>
-      </main>
-
-      <style>{`
-        @media (max-width: 767px) {
-          .sidebar-overlay { display: block !important; }
-          .main-content { padding: 16px 12px !important; }
-        }
-      `}</style>
-    </div>
+        </MainContent>
+      </MainArea>
+    </AppContainer>
   )
 }
