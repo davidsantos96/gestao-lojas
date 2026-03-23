@@ -1,21 +1,21 @@
 export default {
   title: 'light',
   colors: {
-    bg:      '#f3f4f6',
-    surface: '#ffffff',
-    s2:      '#f9fafb',
-    s3:      '#e5e7eb',
-    border:  '#d1d5db',
-    b2:      '#9ca3af',
-    accent:  '#00a882',
-    accentD: '#008b6a',
-    blue:    '#3070e0',
-    blueD:   '#255cbd',
-    red:     '#e53e3e',
-    yellow:  '#d69e2e',
-    purple:  '#805ad5',
-    text:    '#111827',
-    muted:   '#6b7280',
-    muted2:  '#4b5563',
+    bg: '#FDFCFB', // Warm white
+    surface: '#FFFFFF',
+    s2: '#F7F5F2', // Warm gray
+    s3: '#EEEAE5',
+    border: '#E1DDD8',
+    b2: '#B0AAA3',
+    accent: '#6366F1', // Indigo Moderno
+    accentD: '#4F46E5',
+    blue: '#0EA5E9',
+    blueD: '#0284C7',
+    red: '#E11D48',
+    yellow: '#D97706',
+    purple: '#7C3AED',
+    text: '#1C1917', // Stone 900
+    muted: '#78716C', // Stone 500
+    muted2: '#44403C',
   }
 };

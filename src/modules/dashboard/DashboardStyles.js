@@ -1,4 +1,4 @@
-import styled, { keyframes } from 'styled-components'
+import styled, { keyframes, css } from 'styled-components'
 
 const spin = keyframes`
   from { transform: rotate(0deg); }
@@ -44,7 +44,9 @@ export const RefreshBtn = styled.button`
   transition: all .15s;
 
   svg {
-    animation: ${props => props.$loading ? `${spin} 0.8s linear infinite` : 'none'};
+    ${props => props.$loading && css`
+      animation: ${spin} 0.8s linear infinite;
+    `}
   }
 `
 

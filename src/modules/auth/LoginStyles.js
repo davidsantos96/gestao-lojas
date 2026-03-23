@@ -1,4 +1,4 @@
-import styled, { keyframes } from 'styled-components'
+import styled, { keyframes, css } from 'styled-components'
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(24px); }
@@ -68,7 +68,11 @@ export const LoginCard = styled.form`
   border: 1px solid ${props => props.theme.colors.border};
   backdrop-filter: blur(20px);
   box-shadow: 0 24px 80px rgba(0,0,0,.5), 0 0 0 1px ${props => props.theme.colors.border};
-  animation: ${props => props.$shake ? `${shake} 0.5s ease-in-out` : `${fadeIn} 0.6s ease-out`};
+  ${props => props.$shake ? css`
+    animation: ${shake} 0.5s ease-in-out;
+  ` : css`
+    animation: ${fadeIn} 0.6s ease-out;
+  `}
 `
 
 export const LogoWrap = styled.div`
@@ -179,7 +183,9 @@ export const SubmitBtn = styled.button`
   cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
 
   svg {
-    animation: ${props => props.$loading ? `${spin} 0.8s linear infinite` : 'none'};
+    ${props => props.$loading && css`
+      animation: ${spin} 0.8s linear infinite;
+    `}
   }
 `
 

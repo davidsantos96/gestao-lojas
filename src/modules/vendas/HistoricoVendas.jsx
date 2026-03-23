@@ -13,7 +13,7 @@ import {
   FilterLabel, FilterInput, SearchWrap, SearchInput, ClearFiltersBtn,
   TotalCountBadge, EmptyStateWrap, TableCard, StyledTable, Th, Tr, Td,
   ActionsWrap, ActionBtn, ChevronIconWrap, DetailWrap, DetailHeader,
-  DetailTable, DetailTh, DetailTr, DetailTd, DetailTotalWrap
+  DetailTable, DetailTh, DetailTd, DetailTotalWrap
 } from './HistoricoVendasStyles'
 
 export function HistoricoVendas() {
