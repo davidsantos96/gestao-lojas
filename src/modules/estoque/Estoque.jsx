@@ -1,6 +1,5 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { Plus, Search, Package, Boxes, DollarSign, AlertTriangle, RefreshCw } from 'lucide-react'
-import { C } from '../../constants/theme'
 import { fmtBRL } from '../../utils/format'
 import { useProdutos } from '../../hooks/useProdutos'
 import { useMovimentos } from '../../hooks/useMovimentos'
@@ -10,6 +9,13 @@ import { TabelaProdutos } from './TabelaProdutos'
 import { TabelaMovimentos } from './TabelaMovimentos'
 import { ModalProduto } from './ModalProduto'
 import { ModalMovimentacao } from './ModalMovimentacao'
+import { ThemeContext } from '../../contexts/ThemeContext'
+import {
+  Container, HeaderWrap, HeaderLeft, ModuleBadge, Title,
+  HeaderActions, RefreshBtn, CtaBtn, KpiGrid, TabsWrap,
+  TabBtn, FiltersWrap, SearchBox, SearchInput, StatusFiltersWrap,
+  FilterBtn
+} from './EstoqueStyles'
 
 const TABS = [
   { key: 'produtos',   label: 'Produtos'      },
@@ -23,17 +29,19 @@ const FILTROS = [
   { value: 'out',   label: 'Zerado' },
 ]
 
-// Botão primário contextual por aba
-const CTA = {
-  produtos:   { label: 'Novo Produto',       color: C.accent,  textColor: '#0b1a14' },
-  movimentos: { label: 'Nova Movimentação',  color: C.blue,    textColor: '#fff'    },
-}
-
 export function Estoque() {
   const [tab,           setTab]           = useState('produtos')
   const [modalProduto,  setModalProduto]  = useState(false)   // false | null (novo) | objeto (editar)
   const [modalMov,      setModalMov]      = useState(false)
   const [refreshing,    setRefreshing]    = useState(false)
+
+  const { theme } = useContext(ThemeContext)
+
+  // Botão primário contextual por aba
+  const CTA = {
+    produtos:   { label: 'Novo Produto',       color: theme.colors.accent,  textColor: '#0b1a14' },
+    movimentos: { label: 'Nova Movimentação',  color: theme.colors.blue,    textColor: '#fff'    },
+  }
 
   // ── Hooks de dados ───────────────────────────────────────────────────────
   const {
@@ -77,94 +85,83 @@ export function Estoque() {
   const cta = CTA[tab]
 
   return (
-    <div>
+    <Container>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div>
-          <div style={{ fontSize: 11, color: C.accent, fontFamily: 'monospace', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6 }}>Módulo</div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: C.text, letterSpacing: -0.5 }}>Gestão de Estoque</h2>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
+      <HeaderWrap>
+        <HeaderLeft>
+          <ModuleBadge>Módulo</ModuleBadge>
+          <Title>Gestão de Estoque</Title>
+        </HeaderLeft>
+        <HeaderActions>
+          <RefreshBtn
             onClick={handleRefresh}
             disabled={refreshing}
+            $refreshing={refreshing}
             title="Atualizar dados"
-            style={{ padding: '9px 12px', borderRadius: 8, background: C.s2, border: `1px solid ${C.border}`, color: refreshing ? C.muted : C.muted2, cursor: refreshing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}
           >
-            <RefreshCw size={14} style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
+            <RefreshCw size={14} />
             {refreshing ? 'Atualizando...' : ''}
-          </button>
-          <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
-          <button
+          </RefreshBtn>
+          <CtaBtn
             onClick={handleCTA}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '9px 18px', borderRadius: 8, border: 'none',
-              background: cta.color, color: cta.textColor,
-              fontWeight: 700, fontSize: 13, cursor: 'pointer',
-              transition: 'background .15s',
-            }}
+            $color={cta.color}
+            $textColor={cta.textColor}
           >
             <Plus size={15} /> {cta.label}
-          </button>
-        </div>
-      </div>
+          </CtaBtn>
+        </HeaderActions>
+      </HeaderWrap>
 
       {/* KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 24 }}>
+      <KpiGrid>
         {loadProd
           ? Array.from({ length: 4 }).map((_, i) => <SkeletonKPI key={i} />)
           : <>
-              <KPI label="Total Códigos"    value={resumo.totalSkus}          sub="produtos ativos"  color={C.blue}   icon={Package}       />
-              <KPI label="Unidades"      value={resumo.totalUnidades}       sub="em estoque"       color={C.accent} icon={Boxes}         />
-              <KPI label="Valor Estoque" value={fmtBRL(resumo.valorTotal)} sub="pelo custo"       color={C.yellow} icon={DollarSign}    />
-              <KPI label="Alertas"       value={resumo.alertas}             sub="precisam atenção" color={C.red}    icon={AlertTriangle} />
+              <KPI label="Total Códigos"    value={resumo.totalSkus}          sub="produtos ativos"  color={theme.colors.blue}   icon={Package}       />
+              <KPI label="Unidades"      value={resumo.totalUnidades}       sub="em estoque"       color={theme.colors.accent} icon={Boxes}         />
+              <KPI label="Valor Estoque" value={fmtBRL(resumo.valorTotal)} sub="pelo custo"       color={theme.colors.yellow} icon={DollarSign}    />
+              <KPI label="Alertas"       value={resumo.alertas}             sub="precisam atenção" color={theme.colors.red}    icon={AlertTriangle} />
             </>
         }
-      </div>
+      </KpiGrid>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: `1px solid ${C.border}` }}>
+      <TabsWrap>
         {TABS.map(({ key, label }) => (
-          <button key={key} onClick={() => setTab(key)} style={{
-            padding: '10px 20px', border: 'none', background: 'none', cursor: 'pointer',
-            fontSize: 13, fontWeight: 600,
-            color: tab === key ? C.accent : C.muted,
-            borderBottom: tab === key ? `2px solid ${C.accent}` : '2px solid transparent',
-            marginBottom: -1,
-          }}>
+          <TabBtn 
+            key={key} 
+            onClick={() => setTab(key)} 
+            $active={tab === key}
+          >
             {label}
-          </button>
+          </TabBtn>
         ))}
-      </div>
+      </TabsWrap>
 
       {/* Aba Produtos */}
       {tab === 'produtos' && (
         <>
-          <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-            <div style={{ flex: 1, position: 'relative' }}>
-              <Search size={14} color={C.muted} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
-              <input
+          <FiltersWrap>
+            <SearchBox>
+              <Search size={14} className="search-icon" color={theme.colors.muted} />
+              <SearchInput
                 value={busca}
                 onChange={e => setBusca(e.target.value)}
                 placeholder="Buscar por nome, código ou categoria..."
-                style={{ width: '100%', padding: '9px 12px 9px 34px', background: C.s2, border: `1px solid ${C.border}`, borderRadius: 8, color: C.text, fontSize: 13, outline: 'none' }}
               />
-            </div>
-            <div style={{ display: 'flex', gap: 6 }}>
+            </SearchBox>
+            <StatusFiltersWrap>
               {FILTROS.map(({ value, label }) => (
-                <button key={value} onClick={() => setFiltroStatus(value)} style={{
-                  padding: '9px 14px', borderRadius: 8,
-                  border: `1px solid ${filtroStatus === value ? C.accent : C.border}`,
-                  background: filtroStatus === value ? 'rgba(0,217,168,.1)' : C.s2,
-                  color: filtroStatus === value ? C.accent : C.muted,
-                  fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                }}>
+                <FilterBtn 
+                  key={value} 
+                  onClick={() => setFiltroStatus(value)} 
+                  $active={filtroStatus === value}
+                >
                   {label}
-                </button>
+                </FilterBtn>
               ))}
-            </div>
-          </div>
+            </StatusFiltersWrap>
+          </FiltersWrap>
 
           <TabelaProdutos
             produtos={produtosFiltrados}
@@ -204,6 +201,6 @@ export function Estoque() {
           onSubmit={handleNovaMovimentacao}
         />
       )}
-    </div>
+    </Container>
   )
 }

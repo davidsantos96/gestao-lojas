@@ -1,6 +1,10 @@
-import { useState, useEffect } from 'react'
-import { Bell, Settings, ChevronRight, Menu, X } from 'lucide-react'
-import { C } from '../../constants/theme'
+import { useState, useEffect, useContext } from 'react'
+import { Bell, Settings, ChevronRight, Menu, X, Sun, Moon } from 'lucide-react'
+import { ThemeContext } from '../../contexts/ThemeContext'
+import { 
+  HeaderContainer, LeftGroup, ToggleSidebarBtn, Breadcrumb, 
+  RightGroup, DateTimeDisplay, IconButton 
+} from './HeaderStyles'
 
 const PAGE_LABELS = {
   dashboard:  'Dashboard',
@@ -23,72 +27,45 @@ function useDateTime() {
 
 export function Header({ page, onToggleSidebar, sidebarOpen }) {
   const now = useDateTime()
+  const { toggleTheme, theme } = useContext(ThemeContext)
 
   const dateStr = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
   const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 
+  const isLight = theme.title === 'light'
+
   return (
-    <header style={{
-      padding: '12px 20px',
-      borderBottom: `1px solid ${C.border}`,
-      background: C.surface,
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      position: 'sticky', top: 0, zIndex: 10,
-      gap: 12,
-    }}>
-      {/* Esquerda: botão menu + breadcrumb */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-        <button
-          id="sidebar-toggle-btn"
-          onClick={onToggleSidebar}
-          title={sidebarOpen ? 'Fechar menu' : 'Abrir menu'}
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            padding: 6, borderRadius: 6, display: 'flex', alignItems: 'center',
-            color: C.muted, flexShrink: 0,
-            transition: 'color .15s, background .15s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.color = C.text; e.currentTarget.style.background = C.s3 }}
-          onMouseLeave={e => { e.currentTarget.style.color = C.muted; e.currentTarget.style.background = 'none' }}
-        >
+    <HeaderContainer>
+      <LeftGroup>
+        <ToggleSidebarBtn onClick={onToggleSidebar} title={sidebarOpen ? 'Fechar menu' : 'Abrir menu'}>
           {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
-        </button>
+        </ToggleSidebarBtn>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: C.muted, overflow: 'hidden' }}>
-          <span style={{ whiteSpace: 'nowrap' }}>Sistema</span>
+        <Breadcrumb>
+          <span>Sistema</span>
           <ChevronRight size={12} style={{ flexShrink: 0 }} />
-          <span style={{ color: C.text, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {PAGE_LABELS[page]}
-          </span>
-        </div>
-      </div>
+          <span className="title">{PAGE_LABELS[page]}</span>
+        </Breadcrumb>
+      </LeftGroup>
 
-      {/* Direita: data/hora + ícones */}
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
-        <div style={{
-          fontSize: 11, color: C.muted, fontFamily: 'monospace',
-          display: 'flex', alignItems: 'center', gap: 6,
-        }}>
+      <RightGroup>
+        <DateTimeDisplay>
           <span>{dateStr}</span>
-          <span style={{
-            background: C.s3, padding: '2px 6px', borderRadius: 4,
-            color: C.accent, letterSpacing: 1,
-          }}>
-            {timeStr}
-          </span>
-        </div>
+          <span className="time-badge">{timeStr}</span>
+        </DateTimeDisplay>
 
-        <button style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-          <Bell size={16} color={C.muted} />
-          <span style={{
-            position: 'absolute', top: 2, right: 2,
-            width: 6, height: 6, borderRadius: 3, background: C.red,
-          }} />
-        </button>
-        <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
-          <Settings size={16} color={C.muted} />
-        </button>
-      </div>
-    </header>
+        <IconButton onClick={toggleTheme} title="Alternar Tema">
+          {isLight ? <Moon size={16} /> : <Sun size={16} />}
+        </IconButton>
+
+        <IconButton>
+          <Bell size={16} />
+          <span className="nav-dot" />
+        </IconButton>
+        <IconButton>
+          <Settings size={16} />
+        </IconButton>
+      </RightGroup>
+    </HeaderContainer>
   )
 }

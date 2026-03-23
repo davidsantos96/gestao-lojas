@@ -1,5 +1,5 @@
+import React, { useContext } from 'react'
 import { Eye, Edit2, Trash2, Package } from 'lucide-react'
-import { C } from '../../constants/theme'
 import { STATUS_ESTOQUE } from '../../data/mock'
 import { fmtBRL } from '../../utils/format'
 import { Card } from '../../components/ui/Card'
@@ -7,6 +7,12 @@ import { Tag } from '../../components/ui/Tag'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { SkeletonTable } from '../../components/ui/Skeleton'
 import { ErrorState } from '../../components/ui/ErrorState'
+import { ThemeContext } from '../../contexts/ThemeContext'
+import {
+  TableWrap, StyledTable, Th, Tr, Td, ColorWrap, ColorBadge, ColorName,
+  EmptyColor, StockWrap, StockNumber, StockBarBg, StockBarFill,
+  ActionsWrap, ActionBtn
+} from './TabelaProdutosStyles'
 
 const COR_HEX = {
   'Preto':'#1a1a1a','Branco':'#f5f5f5','Cinza':'#9e9e9e','Azul':'#1565c0',
@@ -18,6 +24,8 @@ const COR_HEX = {
 const COLUNAS = ['Código', 'Produto', 'Categoria', 'Cor', 'Estoque', 'Mínimo', 'Custo', 'Preço', 'Status', '']
 
 export function TabelaProdutos({ produtos, loading, error, onRefetch, onEditar, onRemover }) {
+  const { theme } = useContext(ThemeContext)
+
   if (loading) return <Card><SkeletonTable rows={6} cols={9} /></Card>
   if (error)   return <Card><ErrorState error={error} onRetry={onRefetch} /></Card>
 
@@ -32,69 +40,70 @@ export function TabelaProdutos({ produtos, loading, error, onRefetch, onEditar, 
   )
 
   return (
-    <Card style={{ overflow: 'hidden' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <TableWrap>
+      <StyledTable>
         <thead>
-          <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+          <tr>
             {COLUNAS.map((h, i) => (
-              <th key={i} style={{
-                padding: '12px 16px', textAlign: 'left', fontSize: 11,
-                color: C.muted, fontFamily: 'monospace', letterSpacing: 1.5,
-                textTransform: 'uppercase', fontWeight: 500, whiteSpace: 'nowrap',
-              }}>
-                {h}
-              </th>
+              <Th key={i}>{h}</Th>
             ))}
           </tr>
         </thead>
         <tbody>
           {produtos.map((p, i) => {
             const cfg = STATUS_ESTOQUE[p.status] ?? STATUS_ESTOQUE.ok
+            // Override with theme colors
+            const statusColor = cfg.color === '#00d9a8' ? theme.colors.accent 
+                              : cfg.color === '#ff5b6b' ? theme.colors.red 
+                              : cfg.color === '#f7c948' ? theme.colors.yellow : cfg.color;
+            const statusBg = `${statusColor}1A`
+
             const pct = Math.min(100, Math.round((p.estoque / (p.minimo * 3)) * 100))
+            
             return (
-              <tr key={p.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.015)', transition: 'background .1s' }}>
-                <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted, fontFamily: 'monospace' }}>{p.sku}</td>
-                <td style={{ padding: '13px 16px', fontSize: 13, fontWeight: 600, color: C.text }}>{p.nome}</td>
-                <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted2 }}>{p.categoria}</td>
-                <td style={{ padding: '13px 16px' }}>
+              <Tr key={p.id} $isEven={i % 2 === 0}>
+                <Td $mono $color={theme.colors.muted}>{p.sku}</Td>
+                <Td $fontSize="13px" $weight={600} $color={theme.colors.text}>{p.nome}</Td>
+                <Td $color={theme.colors.muted2}>{p.categoria}</Td>
+                <Td>
                   {p.cor
-                    ? <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ width: 12, height: 12, borderRadius: '50%', background: COR_HEX[p.cor] || '#888', flexShrink: 0, border: p.cor === 'Branco' ? '1px solid #444' : 'none' }} />
-                        <span style={{ fontSize: 12, color: C.muted2 }}>{p.cor}</span>
-                      </div>
-                    : <span style={{ fontSize: 12, color: C.border }}>—</span>
+                    ? <ColorWrap>
+                        <ColorBadge $hex={COR_HEX[p.cor]} $colorName={p.cor} />
+                        <ColorName>{p.cor}</ColorName>
+                      </ColorWrap>
+                    : <EmptyColor>—</EmptyColor>
                   }
-                </td>
-                <td style={{ padding: '13px 16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: cfg.color, minWidth: 28 }}>{p.estoque}</span>
-                    <div style={{ width: 60, height: 4, borderRadius: 2, background: C.s3 }}>
-                      <div style={{ width: `${pct}%`, height: '100%', borderRadius: 2, background: cfg.color, transition: 'width .3s' }} />
-                    </div>
-                  </div>
-                </td>
-                <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted }}>{p.minimo}</td>
-                <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted2 }}>{fmtBRL(p.custo)}</td>
-                <td style={{ padding: '13px 16px', fontSize: 13, fontWeight: 600, color: C.text }}>{fmtBRL(p.preco)}</td>
-                <td style={{ padding: '13px 16px' }}><Tag color={cfg.color} bg={cfg.bg}>{cfg.label}</Tag></td>
-                <td style={{ padding: '13px 16px' }}>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button title="Ver" style={{ padding: '5px 7px', background: C.s2, border: `1px solid ${C.border}`, borderRadius: 6, cursor: 'pointer' }}>
-                      <Eye size={13} color={C.muted2} />
-                    </button>
-                    <button title="Editar" onClick={() => onEditar?.(p)} style={{ padding: '5px 7px', background: C.s2, border: `1px solid ${C.border}`, borderRadius: 6, cursor: 'pointer' }}>
-                      <Edit2 size={13} color={C.muted2} />
-                    </button>
-                    <button title="Remover" onClick={() => onRemover?.(p)} style={{ padding: '5px 7px', background: C.s2, border: `1px solid rgba(255,91,107,.3)`, borderRadius: 6, cursor: 'pointer' }}>
-                      <Trash2 size={13} color={C.red} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
+                </Td>
+                <Td>
+                  <StockWrap>
+                    <StockNumber $color={statusColor}>{p.estoque}</StockNumber>
+                    <StockBarBg>
+                      <StockBarFill $pct={pct} $color={statusColor} />
+                    </StockBarBg>
+                  </StockWrap>
+                </Td>
+                <Td $color={theme.colors.muted}>{p.minimo}</Td>
+                <Td $color={theme.colors.muted2}>{fmtBRL(p.custo)}</Td>
+                <Td $fontSize="13px" $weight={600} $color={theme.colors.text}>{fmtBRL(p.preco)}</Td>
+                <Td><Tag color={statusColor} bg={statusBg}>{cfg.label}</Tag></Td>
+                <Td>
+                  <ActionsWrap>
+                    <ActionBtn title="Ver">
+                      <Eye size={13} color={theme.colors.muted2} />
+                    </ActionBtn>
+                    <ActionBtn title="Editar" onClick={() => onEditar?.(p)}>
+                      <Edit2 size={13} color={theme.colors.muted2} />
+                    </ActionBtn>
+                    <ActionBtn title="Remover" onClick={() => onRemover?.(p)} $danger>
+                      <Trash2 size={13} color={theme.colors.red} />
+                    </ActionBtn>
+                  </ActionsWrap>
+                </Td>
+              </Tr>
             )
           })}
         </tbody>
-      </table>
-    </Card>
+      </StyledTable>
+    </TableWrap>
   )
 }
