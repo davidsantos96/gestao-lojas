@@ -1,6 +1,14 @@
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useContext } from 'react'
 import { X, Loader2 } from 'lucide-react'
-import { C } from '../../constants/theme'
+import { ThemeContext } from '../../contexts/ThemeContext'
+import {
+  Overlay, ModalWrapper, CloseBtn, ModalBadge, ModalTitle,
+  FormStack, FormGrid, FormGridUnequal, FormLabel, FormInputWrapper,
+  FormInput, FormSelect, ErrorBox, ActionsWrap, CancelBtn, SubmitBtn,
+  MarginCalcBox, MarginColumn, MarginLabel, MarginValue,
+  ColorPickerContainer, ColorInputFlex, ColorPreviewAbsolute, ColorChipSelected,
+  SuggestionsDropdown, SuggestionItem, UnknownColorText, PaletteWrap, PaletteChip
+} from './ModalStyles'
 
 const CATEGORIAS = ['Vestuário', 'Calçados', 'Acessórios']
 
@@ -45,21 +53,13 @@ const PT_PARA_CSS = {
   'índigo':'indigo','anil':'#4b0082',
 }
 
-// Tenta resolver nome digitado → hex usando canvas
 function resolverCorPorNome(nome) {
   if (!nome) return null
   const lower = nome.toLowerCase().trim()
 
-  // 1. Busca no mapa PT
-  if (PT_PARA_CSS[lower]) {
-    return cssParaHex(PT_PARA_CSS[lower])
-  }
-
-  // 2. Tentativa parcial no mapa PT (ex: "azul ma" → "azul marinho")
+  if (PT_PARA_CSS[lower]) return cssParaHex(PT_PARA_CSS[lower])
   const parcial = Object.keys(PT_PARA_CSS).find(k => k.startsWith(lower))
   if (parcial) return cssParaHex(PT_PARA_CSS[parcial])
-
-  // 3. Tenta direto como CSS color name (inglês e hex)
   return cssParaHex(lower)
 }
 
@@ -71,8 +71,7 @@ function cssParaHex(cor) {
     ctx.fillStyle = cor
     ctx.fillRect(0, 0, 1, 1)
     const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data
-    if (a === 0) return null  // transparente = nome inválido
-    // ignora preto puro (fillStyle inválido retorna preto)
+    if (a === 0) return null 
     if (r === 0 && g === 0 && b === 0 && cor !== 'black' && cor !== '#000' && cor !== '#000000') return null
     return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`
   } catch { return null }
@@ -83,25 +82,12 @@ const INITIAL = {
   preco: '', custo: '', estoque_inicial: '', minimo: '',
 }
 
-const inputStyle = {
-  width: '100%', padding: '10px 12px', background: C.s2,
-  border: `1px solid ${C.border}`, borderRadius: 8,
-  color: C.text, fontSize: 13, outline: 'none',
-}
-
-const labelStyle = {
-  fontSize: 11, color: C.muted, fontFamily: 'monospace',
-  letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 6,
-}
-
-// ─── Seletor de cor ──────────────────────────────────────────────────────────
-function CorPicker({ value, onChange, disabled, labelStyle }) {
+function CorPicker({ value, onChange, disabled }) {
   const [input,     setInput]     = useState('')
-  const [preview,   setPreview]   = useState(null)   // { hex, nome } da cor digitada
+  const [preview,   setPreview]   = useState(null)
   const [sugestoes, setSugestoes] = useState([])
   const debounceRef = useRef()
 
-  // Filtra sugestões da paleta conforme digitação
   useEffect(() => {
     clearTimeout(debounceRef.current)
     if (!input.trim()) { setSugestoes([]); setPreview(null); return }
@@ -138,22 +124,15 @@ function CorPicker({ value, onChange, disabled, labelStyle }) {
 
   return (
     <div>
-      <label style={labelStyle}>Cor</label>
+      <FormLabel>Cor</FormLabel>
 
-      {/* Campo de busca / digitação */}
-      <div style={{ position: 'relative', marginBottom: 10 }}>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <div style={{ flex: 1, position: 'relative' }}>
-            {/* Preview ao lado esquerdo do input */}
+      <ColorPickerContainer>
+        <ColorInputFlex>
+          <FormInputWrapper style={{ flex: 1 }}>
             {(hexAtual && !input) && (
-              <span style={{
-                position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
-                width: 14, height: 14, borderRadius: '50%', background: hexAtual,
-                border: hexAtual === '#f5f5f5' ? `1px solid #555` : 'none',
-                flexShrink: 0,
-              }} />
+              <ColorPreviewAbsolute $hex={hexAtual} />
             )}
-            <input
+            <FormInput
               value={input || (!input && value ? value : input)}
               onChange={e => {
                 setInput(e.target.value)
@@ -162,76 +141,68 @@ function CorPicker({ value, onChange, disabled, labelStyle }) {
               onFocus={() => { if (value) setInput(value) }}
               disabled={disabled}
               placeholder="Ex: azul royal, bordô, coral..."
-              style={{
-                width: '100%',
-                padding: hexAtual && !input ? '10px 12px 10px 32px' : '10px 12px',
-                background: C.s2, border: `1px solid ${C.border}`,
-                borderRadius: 8, color: C.text, fontSize: 13, outline: 'none',
-              }}
+              $padding={hexAtual && !input ? '10px 12px 10px 32px' : '10px 12px'}
             />
-          </div>
+          </FormInputWrapper>
 
-          {/* Chip da cor selecionada ou preview */}
           {(value && !input) && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 20, background: hexAtual ? `${hexAtual}22` : C.s2, border: `1.5px solid ${hexAtual || C.border}`, whiteSpace: 'nowrap' }}>
-              {hexAtual && <span style={{ width: 10, height: 10, borderRadius: '50%', background: hexAtual, flexShrink: 0 }} />}
-              <span style={{ fontSize: 12, fontWeight: 600, color: hexAtual || C.muted2 }}>{value}</span>
-              <button onClick={() => { onChange(''); setInput('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, fontSize: 13, lineHeight: 1, padding: 0, marginLeft: 2 }}>✕</button>
-            </div>
+            <ColorChipSelected $hex={hexAtual}>
+              {hexAtual && <span className="chip-circle" />}
+              <span className="chip-text">{value}</span>
+              <button type="button" onClick={() => { onChange(''); setInput('') }}>✕</button>
+            </ColorChipSelected>
           )}
-        </div>
+        </ColorInputFlex>
 
-        {/* Dropdown de sugestões */}
         {(sugestoes.length > 0 || preview) && (
-          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, marginTop: 4, zIndex: 50, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,.4)' }}>
+          <SuggestionsDropdown>
             {sugestoes.map(c => (
-              <button key={c.nome} onClick={() => selPaleta(c)} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
-                onMouseEnter={e => e.currentTarget.style.background = C.s2}
-                onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-                <span style={{ width: 14, height: 14, borderRadius: '50%', background: c.hex, flexShrink: 0, border: c.hex === '#f5f5f5' ? `1px solid ${C.border}` : 'none' }} />
-                <span style={{ fontSize: 13, color: C.text }}>{c.nome}</span>
-              </button>
+              <SuggestionItem key={c.nome} type="button" onClick={() => selPaleta(c)} $hex={c.hex}>
+                <span className="sugg-circle" />
+                <span className="sugg-text">{c.nome}</span>
+              </SuggestionItem>
             ))}
 
             {preview && (
-              <button onClick={confirmarCustom} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 14px', background: 'none', border: 'none', borderTop: `1px solid ${C.border}`, cursor: 'pointer', textAlign: 'left' }}
-                onMouseEnter={e => e.currentTarget.style.background = C.s2}
-                onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-                <span style={{ width: 14, height: 14, borderRadius: '50%', background: preview.hex, flexShrink: 0 }} />
-                <span style={{ fontSize: 13, color: C.text }}>Usar "<strong>{preview.nome}</strong>"</span>
-                <span style={{ fontSize: 11, color: C.muted, marginLeft: 'auto' }}>{preview.hex}</span>
-              </button>
+              <SuggestionItem type="button" onClick={confirmarCustom} $hex={preview.hex} $borderTop={sugestoes.length > 0}>
+                <span className="sugg-circle" />
+                <span className="sugg-text">Usar "<strong>{preview.nome}</strong>"</span>
+                <span className="sugg-hex">{preview.hex}</span>
+              </SuggestionItem>
             )}
 
             {sugestoes.length === 0 && !preview && input && (
-              <div style={{ padding: '10px 14px', fontSize: 12, color: C.muted }}>
+              <UnknownColorText>
                 Cor não reconhecida — verifique o nome
-              </div>
+              </UnknownColorText>
             )}
-          </div>
+          </SuggestionsDropdown>
         )}
-      </div>
+      </ColorPickerContainer>
 
-      {/* Paleta rápida (chips) */}
       {!input && !value && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        <PaletteWrap>
           {CORES.map(c => (
-            <button key={c.nome} type="button" title={c.nome} onClick={() => selPaleta(c)} disabled={disabled}
-              style={{ width: 24, height: 24, borderRadius: '50%', background: c.hex, border: `2px solid ${C.border}`, cursor: 'pointer', transition: 'transform .1s' }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.25)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+            <PaletteChip 
+              key={c.nome} 
+              type="button" 
+              title={c.nome} 
+              onClick={() => selPaleta(c)} 
+              disabled={disabled}
+              $hex={c.hex}
             />
           ))}
-        </div>
+        </PaletteWrap>
       )}
     </div>
   )
 }
 
-
 export function ModalProduto({ produto, onClose, onSubmit }) {
   const isEdit = !!produto
-  const [form,    setForm]    = useState(produto ? {
+  const { theme } = useContext(ThemeContext)
+  
+  const [form, setForm] = useState(produto ? {
     sku:              produto.sku,
     nome:             produto.nome,
     categoria:        produto.categoria,
@@ -241,6 +212,7 @@ export function ModalProduto({ produto, onClose, onSubmit }) {
     estoque_inicial:  produto.estoque,
     minimo:           produto.minimo,
   } : INITIAL)
+  
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
 
@@ -279,120 +251,136 @@ export function ModalProduto({ produto, onClose, onSubmit }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: 32, width: 540, position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
+    <Overlay>
+      <ModalWrapper>
+        <CloseBtn onClick={onClose} disabled={loading}>
+          <X size={18} />
+        </CloseBtn>
 
-        <button onClick={onClose} disabled={loading} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', cursor: 'pointer' }}>
-          <X size={18} color={C.muted} />
-        </button>
+        <ModalBadge>Estoque</ModalBadge>
+        <ModalTitle>{isEdit ? 'Editar Produto' : 'Novo Produto'}</ModalTitle>
 
-        <div style={{ fontSize: 11, color: C.accent, fontFamily: 'monospace', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 8 }}>Estoque</div>
-        <h3 style={{ fontSize: 18, fontWeight: 700, color: C.text, marginBottom: 24 }}>
-          {isEdit ? 'Editar Produto' : 'Novo Produto'}
-        </h3>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-          {/* Código + Nome */}
-          <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 12 }}>
+        <FormStack>
+          <FormGridUnequal>
             <div>
-              <label style={labelStyle}>Código</label>
-              <input value={form.sku} onChange={e => set('sku', e.target.value.toUpperCase())} disabled={loading || isEdit} placeholder="CAM-001" style={{ ...inputStyle, opacity: isEdit ? .6 : 1 }} />
+              <FormLabel>Código</FormLabel>
+              <FormInput 
+                value={form.sku} 
+                onChange={e => set('sku', e.target.value.toUpperCase())} 
+                disabled={loading || isEdit} 
+                placeholder="CAM-001" 
+              />
             </div>
             <div>
-              <label style={labelStyle}>Nome do produto</label>
-              <input value={form.nome} onChange={e => set('nome', e.target.value)} disabled={loading} placeholder="Camiseta Básica P" style={inputStyle} />
+              <FormLabel>Nome do produto</FormLabel>
+              <FormInput 
+                value={form.nome} 
+                onChange={e => set('nome', e.target.value)} 
+                disabled={loading} 
+                placeholder="Camiseta Básica P" 
+              />
             </div>
-          </div>
+          </FormGridUnequal>
 
-          {/* Categoria */}
           <div>
-            <label style={labelStyle}>Categoria</label>
-            <select value={form.categoria} onChange={e => set('categoria', e.target.value)} disabled={loading} style={inputStyle}>
+            <FormLabel>Categoria</FormLabel>
+            <FormSelect 
+              value={form.categoria} 
+              onChange={e => set('categoria', e.target.value)} 
+              disabled={loading}
+            >
               <option value="">Selecione...</option>
               {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
+            </FormSelect>
           </div>
 
-          {/* Preço + Custo */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <FormGrid>
             <div>
-              <label style={labelStyle}>Preço de venda (R$)</label>
-              <input type="number" min="0" step="0.01" value={form.preco} onChange={e => set('preco', e.target.value)} disabled={loading} placeholder="0,00" style={inputStyle} />
+              <FormLabel>Preço de venda (R$)</FormLabel>
+              <FormInput 
+                type="number" min="0" step="0.01" 
+                value={form.preco} 
+                onChange={e => set('preco', e.target.value)} 
+                disabled={loading} 
+                placeholder="0,00" 
+              />
             </div>
             <div>
-              <label style={labelStyle}>Custo (R$)</label>
-              <input type="number" min="0" step="0.01" value={form.custo} onChange={e => set('custo', e.target.value)} disabled={loading} placeholder="0,00" style={inputStyle} />
+              <FormLabel>Custo (R$)</FormLabel>
+              <FormInput 
+                type="number" min="0" step="0.01" 
+                value={form.custo} 
+                onChange={e => set('custo', e.target.value)} 
+                disabled={loading} 
+                placeholder="0,00" 
+              />
             </div>
-          </div>
+          </FormGrid>
 
-          {/* Cor */}
-          <CorPicker value={form.cor} onChange={v => set('cor', v)} disabled={loading} labelStyle={labelStyle} />
+          <CorPicker value={form.cor} onChange={v => set('cor', v)} disabled={loading} />
 
-          {/* Margem calculada ao vivo */}
           {form.preco && form.custo && parseFloat(form.preco) > 0 && (
-            <div style={{ padding: '10px 14px', background: C.s2, borderRadius: 8, border: `1px solid ${C.border}`, display: 'flex', gap: 24 }}>
+            <MarginCalcBox>
               {(() => {
                 const margem = ((parseFloat(form.preco) - parseFloat(form.custo)) / parseFloat(form.preco) * 100).toFixed(1)
                 const lucro  = (parseFloat(form.preco) - parseFloat(form.custo)).toFixed(2)
-                const color  = margem >= 30 ? C.accent : margem >= 15 ? C.yellow : C.red
+                const color  = margem >= 30 ? theme.colors.accent : margem >= 15 ? theme.colors.yellow : theme.colors.red
                 return (
                   <>
-                    <div>
-                      <div style={{ fontSize: 10, color: C.muted, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: 1 }}>Margem</div>
-                      <div style={{ fontSize: 18, fontWeight: 700, color }}>{margem}%</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 10, color: C.muted, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: 1 }}>Lucro unit.</div>
-                      <div style={{ fontSize: 18, fontWeight: 700, color }}>R$ {lucro}</div>
-                    </div>
+                    <MarginColumn>
+                      <MarginLabel>Margem</MarginLabel>
+                      <MarginValue $color={color}>{margem}%</MarginValue>
+                    </MarginColumn>
+                    <MarginColumn>
+                      <MarginLabel>Lucro unit.</MarginLabel>
+                      <MarginValue $color={color}>R$ {lucro}</MarginValue>
+                    </MarginColumn>
                   </>
                 )
               })()}
-            </div>
+            </MarginCalcBox>
           )}
 
-          {/* Estoque inicial + Mínimo */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <FormGrid>
             <div>
-              <label style={labelStyle}>{isEdit ? 'Estoque atual' : 'Estoque inicial'}</label>
-              <input type="number" min="0" value={form.estoque_inicial} onChange={e => set('estoque_inicial', e.target.value)} disabled={loading || isEdit} placeholder="0" style={{ ...inputStyle, opacity: isEdit ? .6 : 1 }} />
-              {isEdit && <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>Use "Nova Movimentação" para ajustar.</div>}
+              <FormLabel>{isEdit ? 'Estoque atual' : 'Estoque inicial'}</FormLabel>
+              <FormInput 
+                type="number" min="0" 
+                value={form.estoque_inicial} 
+                onChange={e => set('estoque_inicial', e.target.value)} 
+                disabled={loading || isEdit} 
+                placeholder="0" 
+              />
+              {isEdit && <div style={{ fontSize: 11, color: theme.colors.muted, marginTop: 4 }}>Use "Nova Movimentação" para ajustar.</div>}
             </div>
             <div>
-              <label style={labelStyle}>Estoque mínimo</label>
-              <input type="number" min="0" value={form.minimo} onChange={e => set('minimo', e.target.value)} disabled={loading} placeholder="5" style={inputStyle} />
+              <FormLabel>Estoque mínimo</FormLabel>
+              <FormInput 
+                type="number" min="0" 
+                value={form.minimo} 
+                onChange={e => set('minimo', e.target.value)} 
+                disabled={loading} 
+                placeholder="5" 
+              />
             </div>
-          </div>
+          </FormGrid>
 
-          {/* Erro */}
-          {error && (
-            <div style={{ fontSize: 12, color: C.red, background: 'rgba(255,91,107,.08)', border: `1px solid rgba(255,91,107,.25)`, borderRadius: 8, padding: '8px 12px' }}>
-              {error}
-            </div>
-          )}
+          {error && <ErrorBox>{error}</ErrorBox>}
 
-          {/* Ações */}
-          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-            <button onClick={onClose} disabled={loading} style={{ flex: 1, padding: 11, borderRadius: 8, border: `1px solid ${C.border}`, background: 'none', color: C.muted, fontSize: 13, cursor: 'pointer' }}>
+          <ActionsWrap>
+            <CancelBtn type="button" onClick={onClose} disabled={loading}>
               Cancelar
-            </button>
-            <button onClick={handleSubmit} disabled={loading} style={{
-              flex: 1, padding: 11, borderRadius: 8, border: 'none',
-              background: loading ? C.accentD : C.accent,
-              color: '#0b1a14', fontWeight: 700, fontSize: 13,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}>
+            </CancelBtn>
+            <SubmitBtn type="button" onClick={handleSubmit} disabled={loading} $loading={loading}>
               {loading
-                ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Salvando...</>
+                ? <><Loader2 size={14} /> Salvando...</>
                 : isEdit ? 'Salvar alterações' : 'Cadastrar produto'
               }
-            </button>
-          </div>
-        </div>
-      </div>
-      <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
-    </div>
+            </SubmitBtn>
+          </ActionsWrap>
+
+        </FormStack>
+      </ModalWrapper>
+    </Overlay>
   )
 }

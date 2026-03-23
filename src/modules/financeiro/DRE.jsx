@@ -1,101 +1,95 @@
-import { C } from '../../constants/theme'
+import { useContext } from 'react'
+import { ThemeContext } from '../../contexts/ThemeContext'
 import { fmtBRL, fmtPct } from '../../utils/format'
 import { Card } from '../../components/ui/Card'
 import { SkeletonKPI, Skeleton } from '../../components/ui/Skeleton'
 import { ErrorState } from '../../components/ui/ErrorState'
-
-const DRE_COLORS = {
-  receita:  '#00d9a8',
-  desconto: '#9299b0',
-  subtotal: '#4f8fff',
-  total:    '#00d9a8',
-}
+import {
+  DreGrid, DreTitle, DreList, DreLineStyle, DreLineSkeleton, DreLabel, DreValue,
+  MetricsCol, MetricLabel, MetricValue, ProgressBarBg, ProgressBarFill, MetricSub
+} from './RelatoriosFinanceiroStyles'
 
 export function DRE({ data, loading, error, onRefetch }) {
+  const { theme } = useContext(ThemeContext)
+
   if (error) return <ErrorState error={error} onRetry={onRefetch} />
+
+  const DRE_COLORS = {
+    receita:  theme.colors.accent,
+    desconto: theme.colors.muted2,
+    subtotal: theme.colors.blue,
+    total:    theme.colors.accent,
+  }
 
   const linhas   = data?.linhas            ?? []
   const metricas = [
-    { label: 'Margem Bruta',   valor: data?.margem_bruta,    color: C.accent },
-    { label: 'Margem Líquida', valor: data?.margem_liquida,  color: C.yellow },
+    { label: 'Margem Bruta',   valor: data?.margem_bruta,    color: theme.colors.accent },
+    { label: 'Margem Líquida', valor: data?.margem_liquida,  color: theme.colors.yellow },
   ]
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+    <DreGrid>
       {/* DRE table */}
       <Card style={{ padding: 28 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 20 }}>
+        <DreTitle>
           DRE Simplificado — Março 2026
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        </DreTitle>
+        <DreList>
           {loading
             ? Array.from({ length: 9 }).map((_, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderTop: i > 0 && i % 3 === 0 ? `1px solid ${C.border}` : 'none' }}>
+                <DreLineSkeleton key={i} $borderTop={i > 0 && i % 3 === 0}>
                   <Skeleton width="55%" height={13} />
                   <Skeleton width="25%" height={13} />
-                </div>
+                </DreLineSkeleton>
               ))
-            : linhas.map((d, i) => (
-                <div key={i} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: d.tipo === 'subtotal' || d.tipo === 'total' ? '12px 0' : '8px 0',
-                  borderTop: d.tipo === 'subtotal' || d.tipo === 'total' ? `1px solid ${C.border}` : 'none',
-                  marginTop: d.tipo === 'subtotal' || d.tipo === 'total' ? 4 : 0,
-                }}>
-                  <span style={{
-                    fontSize: d.tipo === 'total' ? 14 : 13,
-                    fontWeight: d.tipo === 'subtotal' || d.tipo === 'total' ? 700 : 400,
-                    color: d.tipo === 'desconto' ? C.muted2 : C.text,
-                  }}>
-                    {d.label}
-                  </span>
-                  <span style={{
-                    fontSize: d.tipo === 'total' ? 16 : 13,
-                    fontWeight: d.tipo === 'subtotal' || d.tipo === 'total' ? 700 : 500,
-                    color: DRE_COLORS[d.tipo] ?? C.muted2,
-                    fontFamily: 'monospace',
-                  }}>
-                    {d.valor < 0 ? `-${fmtBRL(Math.abs(d.valor))}` : fmtBRL(d.valor)}
-                  </span>
-                </div>
-              ))
+            : linhas.map((d, i) => {
+                const isSubtotal = d.tipo === 'subtotal'
+                const isTotal    = d.tipo === 'total'
+                const isDesconto = d.tipo === 'desconto'
+
+                return (
+                  <DreLineStyle key={i} $isSubtotal={isSubtotal} $isTotal={isTotal}>
+                    <DreLabel $isSubtotal={isSubtotal} $isTotal={isTotal} $isDesconto={isDesconto}>
+                      {d.label}
+                    </DreLabel>
+                    <DreValue $isSubtotal={isSubtotal} $isTotal={isTotal} $color={DRE_COLORS[d.tipo]}>
+                      {d.valor < 0 ? `-${fmtBRL(Math.abs(d.valor))}` : fmtBRL(d.valor)}
+                    </DreValue>
+                  </DreLineStyle>
+                )
+              })
           }
-        </div>
+        </DreList>
       </Card>
 
       {/* Métricas */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <MetricsCol>
         {metricas.map(({ label, valor, color }) => (
           loading
             ? <SkeletonKPI key={label} />
             : (
               <Card key={label} style={{ padding: 24 }}>
-                <div style={{ fontSize: 12, color: C.muted, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-                  {label}
-                </div>
-                <div style={{ fontSize: 32, fontWeight: 700, color, marginBottom: 6 }}>
-                  {fmtPct(valor ?? 0)}
-                </div>
-                <div style={{ height: 8, background: C.s3, borderRadius: 4 }}>
-                  <div style={{ width: `${Math.min(valor ?? 0, 100)}%`, height: '100%', background: color, borderRadius: 4, transition: 'width .4s' }} />
-                </div>
+                <MetricLabel>{label}</MetricLabel>
+                <MetricValue $color={color}>{fmtPct(valor ?? 0)}</MetricValue>
+                <ProgressBarBg>
+                  <ProgressBarFill $pct={Math.min(valor ?? 0, 100)} $color={color} />
+                </ProgressBarBg>
               </Card>
             )
         ))}
 
         <Card style={{ padding: 24 }}>
-          <div style={{ fontSize: 12, color: C.muted, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
-            Ticket Médio
-          </div>
+          <MetricLabel>Ticket Médio</MetricLabel>
           {loading
             ? <Skeleton width="60%" height={32} />
             : <>
-                <div style={{ fontSize: 32, fontWeight: 700, color: C.blue }}>{fmtBRL(data?.ticket_medio ?? 0)}</div>
-                <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>{data?.total_transacoes ?? 0} transações no mês</div>
+                <MetricValue $color={theme.colors.blue}>{fmtBRL(data?.ticket_medio ?? 0)}</MetricValue>
+                <MetricSub>{data?.total_transacoes ?? 0} transações no mês</MetricSub>
               </>
           }
         </Card>
-      </div>
-    </div>
+      </MetricsCol>
+    </DreGrid>
   )
 }
+

@@ -1,18 +1,22 @@
+import React, { useContext } from 'react'
 import { History } from 'lucide-react'
-import { C } from '../../constants/theme'
 import { Card } from '../../components/ui/Card'
 import { Tag } from '../../components/ui/Tag'
 import { SkeletonTable } from '../../components/ui/Skeleton'
 import { ErrorState } from '../../components/ui/ErrorState'
 import { EmptyState } from '../../components/ui/EmptyState'
-
-const TIPO_CONFIG = {
-  entrada: { label: 'Entrada', color: '#00d9a8', bg: 'rgba(0,217,168,.10)' },
-  saida:   { label: 'Saída',   color: '#ff5b6b', bg: 'rgba(255,91,107,.10)' },
-  ajuste:  { label: 'Ajuste',  color: '#f7c948', bg: 'rgba(247,201,72,.10)' },
-}
+import { ThemeContext } from '../../contexts/ThemeContext'
+import { TableWrap, StyledTable, Th, Tr, Td } from './TabelaMovimentosStyles'
 
 export function TabelaMovimentos({ movimentos, loading, error, onRefetch }) {
+  const { theme } = useContext(ThemeContext)
+
+  const TIPO_CONFIG = {
+    entrada: { label: 'Entrada', color: theme.colors.accent, bg: `${theme.colors.accent}1A` },
+    saida:   { label: 'Saída',   color: theme.colors.red,    bg: `${theme.colors.red}1A` },
+    ajuste:  { label: 'Ajuste',  color: theme.colors.yellow, bg: `${theme.colors.yellow}1A` },
+  }
+
   if (loading) return <Card><SkeletonTable rows={6} cols={6} /></Card>
   if (error)   return <Card><ErrorState error={error} onRetry={onRefetch} /></Card>
   if (!movimentos.length) return (
@@ -22,18 +26,12 @@ export function TabelaMovimentos({ movimentos, loading, error, onRefetch }) {
   )
 
   return (
-    <Card style={{ overflow: 'hidden' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <TableWrap>
+      <StyledTable>
         <thead>
-          <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+          <tr>
             {['Data', 'Produto', 'Tipo', 'Qtd', 'Responsável', 'Origem'].map((h, i) => (
-              <th key={i} style={{
-                padding: '12px 16px', textAlign: 'left', fontSize: 11,
-                color: C.muted, fontFamily: 'monospace', letterSpacing: 1.5,
-                textTransform: 'uppercase', fontWeight: 500,
-              }}>
-                {h}
-              </th>
+              <Th key={i}>{h}</Th>
             ))}
           </tr>
         </thead>
@@ -41,20 +39,20 @@ export function TabelaMovimentos({ movimentos, loading, error, onRefetch }) {
           {movimentos.map((m, i) => {
             const cfg = TIPO_CONFIG[m.tipo] ?? TIPO_CONFIG.ajuste
             return (
-              <tr key={m.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.015)' }}>
-                <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted, fontFamily: 'monospace' }}>{m.data}</td>
-                <td style={{ padding: '13px 16px', fontSize: 13, fontWeight: 600, color: C.text }}>{m.produto}</td>
-                <td style={{ padding: '13px 16px' }}><Tag color={cfg.color} bg={cfg.bg}>{cfg.label}</Tag></td>
-                <td style={{ padding: '13px 16px', fontSize: 14, fontWeight: 700, color: cfg.color }}>
+              <Tr key={m.id} $isEven={i % 2 === 0}>
+                <Td $mono $color={theme.colors.muted}>{m.data}</Td>
+                <Td $fontSize="13px" $weight={600} $color={theme.colors.text}>{m.produto}</Td>
+                <Td><Tag color={cfg.color} bg={cfg.bg}>{cfg.label}</Tag></Td>
+                <Td $fontSize="14px" $weight={700} $color={cfg.color}>
                   {m.tipo === 'entrada' ? '+' : ''}{m.qtd}
-                </td>
-                <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted2 }}>{m.responsavel}</td>
-                <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted }}>{m.origem}</td>
-              </tr>
+                </Td>
+                <Td $color={theme.colors.muted2}>{m.responsavel}</Td>
+                <Td $color={theme.colors.muted}>{m.origem}</Td>
+              </Tr>
             )
           })}
         </tbody>
-      </table>
-    </Card>
+      </StyledTable>
+    </TableWrap>
   )
 }

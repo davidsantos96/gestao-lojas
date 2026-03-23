@@ -1,4 +1,5 @@
-import { C } from '../../constants/theme'
+import { useContext } from 'react'
+import { ThemeContext } from '../../contexts/ThemeContext'
 import { fmtBRL } from '../../utils/format'
 import { Card } from '../../components/ui/Card'
 import { Tag } from '../../components/ui/Tag'
@@ -7,54 +8,62 @@ import { ErrorState } from '../../components/ui/ErrorState'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { TrendingUp } from 'lucide-react'
 import { STATUS_FIN } from '../../data/mock'
+import {
+  TableWrap, StyledTable, Th, Tr, Td, TableFooter, TotalText, TotalValue, ActionButton
+} from './TabelasFinanceiroStyles'
 
 export function ContasReceber({ contas, totalPendente, loading, error, onRefetch, onReceber }) {
+  const { theme } = useContext(ThemeContext)
+
   if (loading) return <Card><SkeletonTable rows={5} cols={6} /></Card>
   if (error)   return <Card><ErrorState error={error} onRetry={onRefetch} /></Card>
   if (!contas.length) return <Card><EmptyState icon={TrendingUp} title="Nenhuma conta a receber" /></Card>
 
   return (
     <Card style={{ overflow: 'hidden' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-            {['Descrição', 'Cliente', 'Vencimento', 'Valor', 'Status', ''].map((h, i) => (
-              <th key={i} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, color: C.muted, fontFamily: 'monospace', letterSpacing: 1.5, textTransform: 'uppercase', fontWeight: 500 }}>
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {contas.map((c, i) => {
-            const cfg = STATUS_FIN[c.status] ?? STATUS_FIN.pendente
-            return (
-              <tr key={c.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.015)' }}>
-                <td style={{ padding: '13px 16px', fontSize: 13, fontWeight: 600, color: C.text }}>{c.descricao}</td>
-                <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted2 }}>{c.cliente}</td>
-                <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted, fontFamily: 'monospace' }}>{c.vencimento}</td>
-                <td style={{ padding: '13px 16px', fontSize: 14, fontWeight: 700, color: C.text }}>{fmtBRL(c.valor)}</td>
-                <td style={{ padding: '13px 16px' }}><Tag color={cfg.color} bg={cfg.bg}>{cfg.label}</Tag></td>
-                <td style={{ padding: '13px 16px' }}>
-                  {c.status !== 'recebido' && (
-                    <button
-                      onClick={() => onReceber?.(c.id)}
-                      style={{ padding: '5px 12px', background: 'rgba(79,143,255,.1)', border: `1px solid ${C.blue}44`, borderRadius: 6, color: C.blue, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
-                    >
-                      Receber
-                    </button>
-                  )}
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-      <div style={{ padding: '14px 16px', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'flex-end' }}>
-        <span style={{ fontSize: 12, color: C.muted }}>
-          Total a receber: <strong style={{ color: C.accent }}>{fmtBRL(totalPendente)}</strong>
-        </span>
-      </div>
+      <TableWrap>
+        <StyledTable>
+          <thead>
+            <tr>
+              {['Descrição', 'Cliente', 'Vencimento', 'Valor', 'Status', ''].map((h, i) => (
+                <Th key={i}>{h}</Th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {contas.map((c, i) => {
+              const cfg = STATUS_FIN[c.status] ?? STATUS_FIN.pendente
+              return (
+                <Tr key={c.id} $isEven={i % 2 === 0}>
+                  <Td $fontSize="13px" $weight={600} $color={theme.colors.text}>{c.descricao}</Td>
+                  <Td $fontSize="12px" $color={theme.colors.muted2}>{c.cliente}</Td>
+                  <Td $fontSize="12px" $color={theme.colors.muted} $mono>{c.vencimento}</Td>
+                  <Td $fontSize="14px" $weight={700} $color={theme.colors.text}>{fmtBRL(c.valor)}</Td>
+                  <Td><Tag color={cfg.color} bg={cfg.bg}>{cfg.label}</Tag></Td>
+                  <Td>
+                    {c.status !== 'recebido' && (
+                      <ActionButton
+                        onClick={() => onReceber?.(c.id)}
+                        $bg="rgba(79,143,255,.1)"
+                        $border={`${theme.colors.blue}44`}
+                        $color={theme.colors.blue}
+                      >
+                        Receber
+                      </ActionButton>
+                    )}
+                  </Td>
+                </Tr>
+              )
+            })}
+          </tbody>
+        </StyledTable>
+      </TableWrap>
+      <TableFooter>
+        <TotalText>
+          Total a receber: <TotalValue $color={theme.colors.accent}>{fmtBRL(totalPendente)}</TotalValue>
+        </TotalText>
+      </TableFooter>
     </Card>
   )
 }
+

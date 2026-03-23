@@ -1,6 +1,7 @@
+import { useContext } from 'react'
 import { TrendingUp, TrendingDown, Boxes, AlertTriangle, ArrowDown, ArrowUp, RefreshCw, ChevronRight } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
-import { C } from '../../constants/theme'
+import { ThemeContext } from '../../contexts/ThemeContext'
 import { fmtBRL } from '../../utils/format'
 import { useProdutos } from '../../hooks/useProdutos'
 import { useContasPagar, useCashflow, useResumoFinanceiro } from '../../hooks/useFinanceiro'
@@ -10,14 +11,14 @@ import { SkeletonKPI } from '../../components/ui/Skeleton'
 import { Card } from '../../components/ui/Card'
 import { ChartTooltip } from '../../components/ui/ChartTooltip'
 import { PainelAlertas } from './PainelAlertas'
-
-const STATUS_FIN = {
-  pendente: { color: C.yellow },
-  vencido:  { color: C.red },
-  pago:     { color: C.accent },
-}
+import {
+  DashboardHeader, DashboardTitleWrap, DashboardModule, DashboardTitle, RefreshBtn,
+  KPIGrid, SectionGrid, CardHeader, CardTitle, SeeAllBtn, ListWrap, ListItem,
+  MovIconWrap, ListInfo, ListTitle, ListSub, ListDate, FinValueItem, FinValue
+} from './DashboardStyles'
 
 export function Dashboard({ setPage }) {
+  const { theme } = useContext(ThemeContext)
   const { produtos, resumo, loading: loadProd, refetch: refetchProd } = useProdutos()
   const { contas: contasPagar, loading: loadFin, refetch: refetchFin } = useContasPagar()
   const { data: cashflowData = [], loading: loadCash, execute: refetchCash } = useCashflow()
@@ -30,58 +31,64 @@ export function Dashboard({ setPage }) {
     await Promise.all([refetchProd(), refetchFin(), refetchCash(), refetchMov(), refetchResumo()])
   }
 
+  const STATUS_FIN = {
+    pendente: { color: theme.colors.yellow },
+    vencido:  { color: theme.colors.red },
+    pago:     { color: theme.colors.accent },
+  }
+
   return (
     <div>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28 }}>
-        <div>
-          <div style={{ fontSize: 11, color: C.accent, fontFamily: 'monospace', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6 }}>Visão Geral</div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: C.text, letterSpacing: -0.5 }}>Dashboard</h2>
-        </div>
+      <DashboardHeader>
+        <DashboardTitleWrap>
+          <DashboardModule>Visão Geral</DashboardModule>
+          <DashboardTitle>Dashboard</DashboardTitle>
+        </DashboardTitleWrap>
         <RefreshButton loading={loading} onClick={handleRefresh} />
-      </div>
+      </DashboardHeader>
 
       {/* KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 24 }}>
+      <KPIGrid>
         {loading
           ? Array.from({ length: 4 }).map((_, i) => <SkeletonKPI key={i} />)
           : <>
-            <KPI label="Receita Mar" value={fmtBRL(resumoFin?.receita || 0)} sub="↑ 15% vs fev" color={C.accent} icon={TrendingUp} />
-            <KPI label="Despesas Mar" value={fmtBRL(resumoFin?.despesas || 0)} sub="↓ 3% vs fev" color={C.blue} icon={TrendingDown} />
-            <KPI label="Val. Estoque" value={fmtBRL(resumo.valorTotal)} sub={`${resumo.totalSkus} produtos`} color={C.yellow} icon={Boxes} />
+            <KPI label="Receita Mar" value={fmtBRL(resumoFin?.receita || 0)} sub="↑ 15% vs fev" color={theme.colors.accent} icon={TrendingUp} />
+            <KPI label="Despesas Mar" value={fmtBRL(resumoFin?.despesas || 0)} sub="↓ 3% vs fev" color={theme.colors.blue} icon={TrendingDown} />
+            <KPI label="Val. Estoque" value={fmtBRL(resumo.valorTotal)} sub={`${resumo.totalSkus} produtos`} color={theme.colors.yellow} icon={Boxes} />
             <KPI label="Alertas" value={resumo.alertas + contasPagar.filter(c => c.status === 'vencido').length}
-              sub="estoque + financeiro" color={C.red} icon={AlertTriangle} />
+              sub="estoque + financeiro" color={theme.colors.red} icon={AlertTriangle} />
           </>
         }
-      </div>
+      </KPIGrid>
 
       {/* Gráfico + Alertas */}
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 16, marginBottom: 16 }}>
+      <SectionGrid $template="3fr 2fr" $mb="16px">
         <Card style={{ padding: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Fluxo de Caixa — Últimos 7 meses</span>
-            <button onClick={() => setPage('financeiro')} style={{ fontSize: 11, color: C.blue, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <CardHeader>
+            <CardTitle>Fluxo de Caixa — Últimos 7 meses</CardTitle>
+            <SeeAllBtn onClick={() => setPage('financeiro')}>
               Ver detalhes <ChevronRight size={12} />
-            </button>
-          </div>
+            </SeeAllBtn>
+          </CardHeader>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={cashflowData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="gr" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={C.accent} stopOpacity={0.25} />
-                  <stop offset="95%" stopColor={C.accent} stopOpacity={0} />
+                  <stop offset="5%" stopColor={theme.colors.accent} stopOpacity={0.25} />
+                  <stop offset="95%" stopColor={theme.colors.accent} stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="gb" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={C.blue} stopOpacity={0.2} />
-                  <stop offset="95%" stopColor={C.blue} stopOpacity={0} />
+                  <stop offset="5%" stopColor={theme.colors.blue} stopOpacity={0.2} />
+                  <stop offset="95%" stopColor={theme.colors.blue} stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false} />
-              <XAxis dataKey="mes" tick={{ fill: C.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: C.muted, fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `${v / 1000}k`} />
+              <CartesianGrid strokeDasharray="3 3" stroke={theme.colors.border} vertical={false} />
+              <XAxis dataKey="mes" tick={{ fill: theme.colors.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: theme.colors.muted, fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `${v / 1000}k`} />
               <Tooltip content={<ChartTooltip />} />
-              <Area type="monotone" dataKey="receitas" name="Receitas" stroke={C.accent} fill="url(#gr)" strokeWidth={2} dot={false} />
-              <Area type="monotone" dataKey="despesas" name="Despesas" stroke={C.blue} fill="url(#gb)" strokeWidth={2} dot={false} />
+              <Area type="monotone" dataKey="receitas" name="Receitas" stroke={theme.colors.accent} fill="url(#gr)" strokeWidth={2} dot={false} />
+              <Area type="monotone" dataKey="despesas" name="Despesas" stroke={theme.colors.blue} fill="url(#gb)" strokeWidth={2} dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         </Card>
@@ -92,62 +99,58 @@ export function Dashboard({ setPage }) {
           loading={loading}
           setPage={setPage}
         />
-      </div>
+      </SectionGrid>
 
       {/* Movimentações + Contas a Vencer */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <SectionGrid>
         <Card style={{ padding: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Últimas Movimentações</span>
-            <button onClick={() => setPage('estoque')} style={{ fontSize: 11, color: C.blue, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <CardHeader $mb="14px">
+            <CardTitle>Últimas Movimentações</CardTitle>
+            <SeeAllBtn onClick={() => setPage('estoque')}>
               Ver todas <ChevronRight size={12} />
-            </button>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            </SeeAllBtn>
+          </CardHeader>
+          <ListWrap>
             {movimentos.slice(0, 5).map(m => (
-              <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: `1px solid ${C.border}` }}>
-                <div style={{
-                  width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-                  background: m.tipo === 'entrada' ? 'rgba(0,217,168,.12)' : m.tipo === 'saida' ? 'rgba(255,91,107,.12)' : 'rgba(247,201,72,.12)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  {m.tipo === 'entrada' ? <ArrowDown size={13} color={C.accent} />
-                    : m.tipo === 'saida' ? <ArrowUp size={13} color={C.red} />
-                      : <RefreshCw size={13} color={C.yellow} />}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.produto}</div>
-                  <div style={{ fontSize: 11, color: C.muted }}>{m.origem}</div>
-                </div>
-                <div style={{ fontSize: 11, color: C.muted, flexShrink: 0 }}>{m.data}</div>
-              </div>
+              <ListItem key={m.id}>
+                <MovIconWrap $tipo={m.tipo}>
+                  {m.tipo === 'entrada' ? <ArrowDown size={13} color={theme.colors.accent} />
+                    : m.tipo === 'saida' ? <ArrowUp size={13} color={theme.colors.red} />
+                      : <RefreshCw size={13} color={theme.colors.yellow} />}
+                </MovIconWrap>
+                <ListInfo>
+                  <ListTitle>{m.produto}</ListTitle>
+                  <ListSub>{m.origem}</ListSub>
+                </ListInfo>
+                <ListDate>{m.data}</ListDate>
+              </ListItem>
             ))}
-          </div>
+          </ListWrap>
         </Card>
 
         <Card style={{ padding: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>Contas a Vencer</span>
-            <button onClick={() => setPage('financeiro')} style={{ fontSize: 11, color: C.blue, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <CardHeader $mb="14px">
+            <CardTitle>Contas a Vencer</CardTitle>
+            <SeeAllBtn onClick={() => setPage('financeiro')}>
               Ver todas <ChevronRight size={12} />
-            </button>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            </SeeAllBtn>
+          </CardHeader>
+          <ListWrap>
             {contasPagar.filter(c => c.status !== 'pago').slice(0, 5).map(c => {
               const cfg = STATUS_FIN[c.status]
               return (
-                <div key={c.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${C.border}` }}>
+                <FinValueItem key={c.id}>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: C.text }}>{c.descricao}</div>
-                    <div style={{ fontSize: 11, color: C.muted }}>{c.vencimento} · {c.categoria}</div>
+                    <ListTitle>{c.descricao}</ListTitle>
+                    <ListSub>{c.vencimento} · {c.categoria}</ListSub>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: cfg.color }}>{fmtBRL(c.valor)}</div>
-                </div>
+                  <FinValue $color={cfg.color}>{fmtBRL(c.valor)}</FinValue>
+                </FinValueItem>
               )
             })}
-          </div>
+          </ListWrap>
         </Card>
-      </div>
+      </SectionGrid>
     </div>
   )
 }
@@ -156,27 +159,15 @@ export function Dashboard({ setPage }) {
 
 function RefreshButton({ loading, onClick }) {
   return (
-    <>
-      <button
-        onClick={onClick}
-        disabled={loading}
-        title="Atualizar dados"
-        style={{
-          display: 'flex', alignItems: 'center', gap: 7,
-          padding: '8px 14px', borderRadius: 8,
-          background: C.s2, border: `1px solid ${C.border}`,
-          color: loading ? C.muted : C.muted2,
-          fontSize: 12, cursor: loading ? 'not-allowed' : 'pointer',
-          transition: 'all .15s',
-        }}
-      >
-        <RefreshCw
-          size={14}
-          style={{ animation: loading ? 'spin 0.8s linear infinite' : 'none' }}
-        />
-        {loading ? 'Atualizando...' : 'Atualizar'}
-      </button>
-      <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
-    </>
+    <RefreshBtn
+      onClick={onClick}
+      disabled={loading}
+      title="Atualizar dados"
+      $loading={loading}
+    >
+      <RefreshCw size={14} />
+      {loading ? 'Atualizando...' : 'Atualizar'}
+    </RefreshBtn>
   )
 }
+

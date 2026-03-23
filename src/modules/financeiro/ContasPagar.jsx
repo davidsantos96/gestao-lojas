@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { DollarSign, Paperclip } from 'lucide-react'
-import { C } from '../../constants/theme'
+import { ThemeContext } from '../../contexts/ThemeContext'
 import { fmtBRL } from '../../utils/format'
 import { Card } from '../../components/ui/Card'
 import { Tag } from '../../components/ui/Tag'
@@ -9,11 +9,16 @@ import { ErrorState } from '../../components/ui/ErrorState'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { ModalAnexos } from './ModalAnexos'
 import { STATUS_FIN } from '../../data/mock'
+import {
+  TableWrap, StyledTable, Th, Tr, Td, TableFooter, TotalText, TotalValue, ActionButton, AttachmentBtn
+} from './TabelasFinanceiroStyles'
 
 export function ContasPagar({ contas, totalPendente, loading, error, onRefetch, onPagar }) {
   // anexos: { [contaId]: [{ id, nome, tipo, tamanho, url }] }
   const [anexos,      setAnexos]      = useState({})
   const [contaAnexos, setContaAnexos] = useState(null)   // conta selecionada para o modal
+
+  const { theme } = useContext(ThemeContext)
 
   const getAnexos = (id) => anexos[id] ?? []
 
@@ -35,72 +40,64 @@ export function ContasPagar({ contas, totalPendente, loading, error, onRefetch, 
   return (
     <>
       <Card style={{ overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-              {['Descrição', 'Vencimento', 'Categoria', 'Valor', 'Anexos', 'Status', ''].map((h, i) => (
-                <th key={i} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, color: C.muted, fontFamily: 'monospace', letterSpacing: 1.5, textTransform: 'uppercase', fontWeight: 500, whiteSpace: 'nowrap' }}>
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {contas.map((c, i) => {
-              const cfg       = STATUS_FIN[c.status] ?? STATUS_FIN.pendente
-              const qtdAnexos = getAnexos(c.id).length
+        <TableWrap>
+          <StyledTable>
+            <thead>
+              <tr>
+                {['Descrição', 'Vencimento', 'Categoria', 'Valor', 'Anexos', 'Status', ''].map((h, i) => (
+                  <Th key={i}>{h}</Th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {contas.map((c, i) => {
+                const cfg       = STATUS_FIN[c.status] ?? STATUS_FIN.pendente
+                const qtdAnexos = getAnexos(c.id).length
 
-              return (
-                <tr key={c.id} style={{ borderBottom: `1px solid ${C.border}`, background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,.015)' }}>
-                  <td style={{ padding: '13px 16px', fontSize: 13, fontWeight: 600, color: C.text }}>{c.descricao}</td>
-                  <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted, fontFamily: 'monospace' }}>{c.vencimento}</td>
-                  <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted2 }}>{c.categoria}</td>
-                  <td style={{ padding: '13px 16px', fontSize: 14, fontWeight: 700, color: C.text }}>{fmtBRL(c.valor)}</td>
+                return (
+                  <Tr key={c.id} $isEven={i % 2 === 0}>
+                    <Td $fontSize="13px" $weight={600} $color={theme.colors.text}>{c.descricao}</Td>
+                    <Td $fontSize="12px" $color={theme.colors.muted} $mono>{c.vencimento}</Td>
+                    <Td $fontSize="12px" $color={theme.colors.muted2}>{c.categoria}</Td>
+                    <Td $fontSize="14px" $weight={700} $color={theme.colors.text}>{fmtBRL(c.valor)}</Td>
 
-                  {/* Coluna Anexos */}
-                  <td style={{ padding: '13px 16px' }}>
-                    <button
-                      onClick={() => setContaAnexos(c)}
-                      title={qtdAnexos > 0 ? `${qtdAnexos} arquivo(s)` : 'Anexar documento'}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 5,
-                        padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
-                        border: `1px solid ${qtdAnexos > 0 ? C.blue + '55' : C.border}`,
-                        background: qtdAnexos > 0 ? 'rgba(79,143,255,.08)' : C.s2,
-                        color: qtdAnexos > 0 ? C.blue : C.muted,
-                        fontSize: 11, fontWeight: 600,
-                        transition: 'all .15s',
-                      }}
-                    >
-                      <Paperclip size={12} />
-                      {qtdAnexos > 0 ? qtdAnexos : 'Anexar'}
-                    </button>
-                  </td>
-
-                  <td style={{ padding: '13px 16px' }}>
-                    <Tag color={cfg.color} bg={cfg.bg}>{cfg.label}</Tag>
-                  </td>
-
-                  <td style={{ padding: '13px 16px' }}>
-                    {c.status !== 'pago' && (
-                      <button
-                        onClick={() => onPagar?.(c.id)}
-                        style={{ padding: '5px 12px', background: 'rgba(0,217,168,.1)', border: `1px solid ${C.accent}44`, borderRadius: 6, color: C.accent, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
+                    {/* Coluna Anexos */}
+                    <Td>
+                      <AttachmentBtn
+                        onClick={() => setContaAnexos(c)}
+                        title={qtdAnexos > 0 ? `${qtdAnexos} arquivo(s)` : 'Anexar documento'}
+                        $hasAnexos={qtdAnexos > 0}
                       >
-                        Pagar
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-        <div style={{ padding: '14px 16px', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'flex-end' }}>
-          <span style={{ fontSize: 12, color: C.muted }}>
-            Total pendente: <strong style={{ color: C.red }}>{fmtBRL(totalPendente)}</strong>
-          </span>
-        </div>
+                        <Paperclip size={12} />
+                        {qtdAnexos > 0 ? qtdAnexos : 'Anexar'}
+                      </AttachmentBtn>
+                    </Td>
+
+                    <Td><Tag color={cfg.color} bg={cfg.bg}>{cfg.label}</Tag></Td>
+
+                    <Td>
+                      {c.status !== 'pago' && (
+                        <ActionButton
+                          onClick={() => onPagar?.(c.id)}
+                          $bg="rgba(0,217,168,.1)"
+                          $border={`${theme.colors.accent}44`}
+                          $color={theme.colors.accent}
+                        >
+                          Pagar
+                        </ActionButton>
+                      )}
+                    </Td>
+                  </Tr>
+                )
+              })}
+            </tbody>
+          </StyledTable>
+        </TableWrap>
+        <TableFooter>
+          <TotalText>
+            Total pendente: <TotalValue $color={theme.colors.red}>{fmtBRL(totalPendente)}</TotalValue>
+          </TotalText>
+        </TableFooter>
       </Card>
 
       {/* Modal de Anexos */}
@@ -116,3 +113,4 @@ export function ContasPagar({ contas, totalPendente, loading, error, onRefetch, 
     </>
   )
 }
+

@@ -1,9 +1,15 @@
+import { useContext } from 'react'
 import { AlertTriangle, Package, DollarSign, ChevronRight, CheckCircle } from 'lucide-react'
-import { C } from '../../constants/theme'
+import { ThemeContext } from '../../contexts/ThemeContext'
 import { fmtBRL } from '../../utils/format'
 import { Card } from '../../components/ui/Card'
 import { Tag } from '../../components/ui/Tag'
 import { Skeleton } from '../../components/ui/Skeleton'
+import {
+  AlertsCentralHeader, AlertsTitleWrap, AlertsCentralTitle, AlertsBadge, AlertsSuccess, EmptyAlerts,
+  SectionWrap, SectionHeader, SectionTitleWrap, SectionIconBox, SectionTitle, SectionCount, SeeAllBtn,
+  AlertaCard, AlertaRight, AlertaValue, Divider, ListWrap, ListInfo, ListTitle, ListSub
+} from './DashboardStyles'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -24,70 +30,67 @@ function urgenciaFinanceira(conta) {
   return null
 }
 
-const ESTOQUE_CONFIG = {
-  out: { label: 'Zerado',    color: C.red,    bg: 'rgba(255,91,107,.12)',  prioridade: 0 },
-  low: { label: 'Baixo',     color: C.yellow, bg: 'rgba(247,201,72,.12)',  prioridade: 1 },
-}
-
-const FIN_CONFIG = {
-  vencido: { label: 'Vencido',      color: C.red,    bg: 'rgba(255,91,107,.12)' },
-  critico: { label: 'Vence hoje/amanhã', color: C.red,    bg: 'rgba(255,91,107,.10)' },
-  atencao: { label: 'Vence em breve',    color: C.yellow, bg: 'rgba(247,201,72,.12)' },
-}
-
 // ─── Sub-componentes ──────────────────────────────────────────────────────────
 
 function Secao({ icone: Icon, cor, titulo, contagem, children, onVerTodos }) {
   return (
-    <div style={{ marginBottom: 4 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 24, height: 24, borderRadius: 6, background: `${cor}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <SectionWrap>
+      <SectionHeader>
+        <SectionTitleWrap>
+          <SectionIconBox $cor={cor}>
             <Icon size={12} color={cor} />
-          </div>
-          <span style={{ fontSize: 12, fontWeight: 700, color: C.text }}>{titulo}</span>
-          <span style={{ fontSize: 10, fontFamily: 'monospace', padding: '1px 7px', borderRadius: 99, background: `${cor}18`, color: cor, border: `1px solid ${cor}33` }}>
+          </SectionIconBox>
+          <SectionTitle>{titulo}</SectionTitle>
+          <SectionCount $cor={cor}>
             {contagem}
-          </span>
-        </div>
+          </SectionCount>
+        </SectionTitleWrap>
         {onVerTodos && (
-          <button onClick={onVerTodos} style={{ fontSize: 11, color: C.blue, background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
+          <SeeAllBtn onClick={onVerTodos}>
             Ver todos <ChevronRight size={11} />
-          </button>
+          </SeeAllBtn>
         )}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      </SectionHeader>
+      <ListWrap>
         {children}
-      </div>
-    </div>
+      </ListWrap>
+    </SectionWrap>
   )
 }
 
 function AlertaItem({ esquerda, direita, tag, cor }) {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '9px 12px', borderRadius: 8,
-      background: C.s2, border: `1px solid ${C.border}`,
-      borderLeft: `3px solid ${cor}`,
-    }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: C.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+    <AlertaCard $cor={cor}>
+      <ListInfo>
+        <ListTitle>
           {esquerda.titulo}
-        </div>
-        <div style={{ fontSize: 11, color: C.muted, marginTop: 1 }}>{esquerda.sub}</div>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 8 }}>
-        {direita && <span style={{ fontSize: 13, fontWeight: 700, color: cor }}>{direita}</span>}
+        </ListTitle>
+        <ListSub>{esquerda.sub}</ListSub>
+      </ListInfo>
+      <AlertaRight>
+        {direita && <AlertaValue $cor={cor}>{direita}</AlertaValue>}
         <Tag color={tag.color} bg={tag.bg}>{tag.label}</Tag>
-      </div>
-    </div>
+      </AlertaRight>
+    </AlertaCard>
   )
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export function PainelAlertas({ produtos = [], contasPagar = [], loading, setPage }) {
+  const { theme } = useContext(ThemeContext)
+  
+  const ESTOQUE_CONFIG = {
+    out: { label: 'Zerado',    color: theme.colors.red,    bg: 'rgba(255,91,107,.12)',  prioridade: 0 },
+    low: { label: 'Baixo',     color: theme.colors.yellow, bg: 'rgba(247,201,72,.12)',  prioridade: 1 },
+  }
+
+  const FIN_CONFIG = {
+    vencido: { label: 'Vencido',      color: theme.colors.red,    bg: 'rgba(255,91,107,.12)' },
+    critico: { label: 'Vence hoje/amanhã', color: theme.colors.red,    bg: 'rgba(255,91,107,.10)' },
+    atencao: { label: 'Vence em breve',    color: theme.colors.yellow, bg: 'rgba(247,201,72,.12)' },
+  }
+
   const alertasEstoque = produtos
     .filter(p => p.status !== 'ok')
     .sort((a, b) => ESTOQUE_CONFIG[a.status].prioridade - ESTOQUE_CONFIG[b.status].prioridade)
@@ -104,34 +107,34 @@ export function PainelAlertas({ produtos = [], contasPagar = [], loading, setPag
   return (
     <Card style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 0 }}>
       {/* Header do painel */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Central de Alertas</span>
+      <AlertsCentralHeader>
+        <AlertsTitleWrap>
+          <AlertsCentralTitle>Central de Alertas</AlertsCentralTitle>
           {!loading && totalAlertas > 0 && (
-            <span style={{ fontSize: 10, fontFamily: 'monospace', padding: '2px 8px', borderRadius: 99, background: 'rgba(255,91,107,.15)', color: C.red, border: `1px solid rgba(255,91,107,.3)`, fontWeight: 700 }}>
+            <AlertsBadge>
               {totalAlertas} pendentes
-            </span>
+            </AlertsBadge>
           )}
-        </div>
+        </AlertsTitleWrap>
         {!loading && totalAlertas === 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: C.accent }}>
+          <AlertsSuccess>
             <CheckCircle size={13} /> Tudo em ordem
-          </div>
+          </AlertsSuccess>
         )}
-      </div>
+      </AlertsCentralHeader>
 
       {/* Loading */}
       {loading && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <ListWrap>
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} height={52} radius={8} />)}
-        </div>
+        </ListWrap>
       )}
 
       {/* Sem alertas */}
       {!loading && totalAlertas === 0 && (
-        <div style={{ textAlign: 'center', padding: '20px 0', color: C.muted, fontSize: 12 }}>
+        <EmptyAlerts>
           Nenhum item precisa de atenção agora.
-        </div>
+        </EmptyAlerts>
       )}
 
       {/* Alertas de Estoque */}
@@ -139,7 +142,7 @@ export function PainelAlertas({ produtos = [], contasPagar = [], loading, setPag
         <>
           <Secao
             icone={Package}
-            cor={C.red}
+            cor={theme.colors.red}
             titulo="Estoque"
             contagem={alertasEstoque.length}
             onVerTodos={() => setPage('estoque')}
@@ -158,7 +161,7 @@ export function PainelAlertas({ produtos = [], contasPagar = [], loading, setPag
             })}
           </Secao>
           {alertasFinanceiros.length > 0 && (
-            <div style={{ height: 1, background: C.border, margin: '14px 0' }} />
+            <Divider />
           )}
         </>
       )}
@@ -167,7 +170,7 @@ export function PainelAlertas({ produtos = [], contasPagar = [], loading, setPag
       {!loading && alertasFinanceiros.length > 0 && (
         <Secao
           icone={DollarSign}
-          cor={C.yellow}
+          cor={theme.colors.yellow}
           titulo="Financeiro"
           contagem={alertasFinanceiros.length}
           onVerTodos={() => setPage('financeiro')}
@@ -196,3 +199,4 @@ export function PainelAlertas({ produtos = [], contasPagar = [], loading, setPag
     </Card>
   )
 }
+
