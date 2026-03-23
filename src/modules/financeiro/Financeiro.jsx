@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { Plus, ArrowUpRight, ArrowDownRight, DollarSign, AlertTriangle, RefreshCw } from 'lucide-react'
-import { C } from '../../constants/theme'
+import { ThemeContext } from '../../contexts/ThemeContext'
 import { fmtBRL } from '../../utils/format'
-import { useCashflow, useContasPagar, useContasReceber, useDRE, useLancamento, useLancamentos, useResumoFinanceiro } from '../../hooks/useFinanceiro'
+import { useCashflow, useContasPagar, useContasReceber, useDRE, useLancamentos, useResumoFinanceiro } from '../../hooks/useFinanceiro'
 import { KPI } from '../../components/ui/KPI'
 import { SkeletonKPI } from '../../components/ui/Skeleton'
 import { Cashflow } from './Cashflow'
@@ -11,6 +11,11 @@ import { ContasReceber } from './ContasReceber'
 import { DRE } from './DRE'
 import { Lancamentos } from './Lancamentos'
 import { ModalLancamento } from './ModalLancamento'
+import {
+  Container, HeaderWrap, HeaderLeft, ModuleBadge, Title,
+  HeaderActions, RefreshBtn, CtaBtn, KpiGrid,
+  TabsWrap, TabBtn
+} from './FinanceiroStyles'
 
 const TABS = [
   { key: 'cashflow', label: 'Fluxo de Caixa'  },
@@ -25,12 +30,14 @@ export function Financeiro() {
   const [refreshing,   setRefreshing]   = useState(false)
   const [lancamentoEdit, setLancamentoEdit] = useState(null)
 
+  const { theme } = useContext(ThemeContext)
+
   // ── Hooks de dados ───────────────────────────────────────────────────────
   const cashflow    = useCashflow()
   const pagar       = useContasPagar()
   const receber     = useContasReceber()
   const dre         = useDRE()
-  const lancamentoHook    = useLancamentos()
+  const lancamentoHook     = useLancamentos()
   const lancamentosDespesa = useLancamentos({ tipo: 'DESPESA' })
   const lancamentosReceita = useLancamentos({ tipo: 'RECEITA' })
   const { data: resumoFin, execute: refetchResumo } = useResumoFinanceiro()
@@ -59,59 +66,54 @@ export function Financeiro() {
   }
 
   return (
-    <div>
+    <Container>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div>
-          <div style={{ fontSize: 11, color: C.blue, fontFamily: 'monospace', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 6 }}>Módulo</div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: C.text, letterSpacing: -0.5 }}>Gestão Financeira</h2>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
+      <HeaderWrap>
+        <HeaderLeft>
+          <ModuleBadge>Módulo</ModuleBadge>
+          <Title>Gestão Financeira</Title>
+        </HeaderLeft>
+        <HeaderActions>
+          <RefreshBtn
             onClick={handleRefetchAll}
             disabled={refreshing}
+            $refreshing={refreshing}
             title="Atualizar dados"
-            style={{ padding: '9px 12px', borderRadius: 8, background: C.s2, border: `1px solid ${C.border}`, color: refreshing ? C.muted : C.muted2, cursor: refreshing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}
           >
-            <RefreshCw size={14} style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
+            <RefreshCw size={14} />
             {refreshing ? 'Atualizando...' : ''}
-          </button>
-          <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
-          <button
-            onClick={() => setShowModal(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 8, background: C.blue, border: 'none', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
-          >
+          </RefreshBtn>
+          <CtaBtn onClick={() => setShowModal(true)}>
             <Plus size={15} /> Novo Lançamento
-          </button>
-        </div>
-      </div>
+          </CtaBtn>
+        </HeaderActions>
+      </HeaderWrap>
 
       {/* KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 24 }}>
+      <KpiGrid>
         {loadingKPIs
           ? Array.from({ length: 4 }).map((_, i) => <SkeletonKPI key={i} />)
           : <>
-              <KPI label="Receita Mar"  value={fmtBRL(receita)}        sub="↑ 15% vs fev"    color={C.accent} icon={ArrowUpRight}   />
-              <KPI label="Despesas Mar" value={fmtBRL(despesas)}       sub="↓ 3% vs fev"     color={C.blue}   icon={ArrowDownRight} />
-              <KPI label="Saldo do Mês" value={fmtBRL(saldo)}          sub="lucro líquido"   color={C.yellow} icon={DollarSign}     />
-              <KPI label="Vence em 7d"  value={fmtBRL(pagar.totalPendente)} sub="contas a pagar" color={C.red} icon={AlertTriangle}  />
+              <KPI label="Receita Mar"  value={fmtBRL(receita)}        sub="↑ 15% vs fev"    color={theme.colors.accent} icon={ArrowUpRight}   />
+              <KPI label="Despesas Mar" value={fmtBRL(despesas)}       sub="↓ 3% vs fev"     color={theme.colors.blue}   icon={ArrowDownRight} />
+              <KPI label="Saldo do Mês" value={fmtBRL(saldo)}          sub="lucro líquido"   color={theme.colors.yellow} icon={DollarSign}     />
+              <KPI label="Vence em 7d"  value={fmtBRL(pagar.totalPendente)} sub="contas a pagar" color={theme.colors.red} icon={AlertTriangle}  />
             </>
         }
-      </div>
+      </KpiGrid>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: `1px solid ${C.border}` }}>
+      <TabsWrap>
         {TABS.map(({ key, label }) => (
-          <button key={key} onClick={() => setTab(key)} style={{
-            padding: '10px 18px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
-            color: tab === key ? C.blue : C.muted,
-            borderBottom: tab === key ? `2px solid ${C.blue}` : '2px solid transparent',
-            marginBottom: -1,
-          }}>
+          <TabBtn 
+            key={key} 
+            onClick={() => setTab(key)} 
+            $active={tab === key}
+          >
             {label}
-          </button>
+          </TabBtn>
         ))}
-      </div>
+      </TabsWrap>
 
       {/* Content */}
       {tab === 'cashflow' && (
@@ -165,6 +167,7 @@ export function Financeiro() {
           onSubmit={handleNovoLancamento}
         />
       )}
-    </div>
+    </Container>
   )
 }
+
