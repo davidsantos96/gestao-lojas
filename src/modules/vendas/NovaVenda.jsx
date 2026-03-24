@@ -3,6 +3,7 @@ import { Plus, Minus, Trash2, ShoppingCart, CheckCircle, Search, Package, Tag as
 import { fmtBRL } from '../../utils/format'
 import { useCarrinho } from '../../hooks/useVendas'
 import { FORMAS_PAGAMENTO } from '../../services/vendasService'
+import { clienteService } from '../../services/clienteService'
 import { ThemeContext } from '../../contexts/ThemeContext'
 import {
   SuccessContainer, SuccessIconWrap, SuccessTitle, SuccessText, SuccessBtn,
@@ -17,6 +18,7 @@ import {
 export function NovaVenda({ produtos = [], onVendaConcluida }) {
   const [busca, setBusca] = useState('')
   const [vendaConcluida, setVendaConcluida] = useState(null)
+  const [sugestoesClientes, setSugestoesClientes] = useState([])
   
   // Apenas para passar a cor correta de ícones se necessário
   const { theme } = useContext(ThemeContext)
@@ -199,9 +201,24 @@ export function NovaVenda({ produtos = [], onVendaConcluida }) {
                 <FormLabel>Cliente (opcional)</FormLabel>
                 <FormInput 
                   value={cliente} 
-                  onChange={e => setCliente(e.target.value)} 
+                  onChange={async e => {
+                    const val = e.target.value
+                    setCliente(val)
+                    if (val.length >= 3) {
+                      const sug = await clienteService.search(val)
+                      setSugestoesClientes(sug)
+                    } else {
+                      setSugestoesClientes([])
+                    }
+                  }} 
                   placeholder="Nome do cliente..." 
+                  list="clientes-sugestoes"
                 />
+                <datalist id="clientes-sugestoes">
+                  {sugestoesClientes.map(c => (
+                    <option key={c.id} value={c.nome} />
+                  ))}
+                </datalist>
               </div>
               <div>
                 <FormLabel>Forma de Pagamento</FormLabel>
