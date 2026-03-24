@@ -14,6 +14,7 @@ const Dashboard  = lazy(() => import('./modules/dashboard/Dashboard').then(m => 
 const Estoque    = lazy(() => import('./modules/estoque/Estoque').then(m => ({ default: m.Estoque })))
 const Financeiro = lazy(() => import('./modules/financeiro/Financeiro').then(m => ({ default: m.Financeiro })))
 const Vendas     = lazy(() => import('./modules/vendas/Vendas').then(m => ({ default: m.Vendas })))
+const Clientes   = lazy(() => import('./modules/clientes/Clientes').then(m => ({ default: m.Clientes })))
 
 function ModuleFallback() {
   return <div><SkeletonTable rows={6} cols={5} /></div>
@@ -66,6 +67,7 @@ export default function App() {
             {page === 'vendas'     && <Vendas />}
             {page === 'estoque'    && <Estoque />}
             {page === 'financeiro' && <Financeiro />}
+            {page === 'clientes'   && <Clientes />}
           </Suspense>
         </MainContent>
       </MainArea>
