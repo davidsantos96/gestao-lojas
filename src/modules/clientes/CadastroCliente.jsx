@@ -25,7 +25,7 @@ export function CadastroCliente({ onClose, onSave }) {
     setLoading(true)
     try {
       await clienteService.create(formData)
-      onSave()
+      await onSave()
     } catch (error) {
       console.error("Erro ao salvar cliente:", error)
     } finally {

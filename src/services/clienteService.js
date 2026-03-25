@@ -4,7 +4,7 @@ export const clienteService = {
   // Retorna todos os clientes com segmentação atualizada
   getAll: async () => {
     const res = await api.get('/clientes');
-    const clientes = Array.isArray(res.data) ? res.data : (res.data?.data ?? res.data?.clientes ?? []);
+    const clientes = Array.isArray(res) ? res : (res?.data ?? res?.clientes ?? []);
 
     const hoje = new Date();
     const seisMesesAtras = new Date();
@@ -32,32 +32,32 @@ export const clienteService = {
   // Busca um cliente específico
   getById: async (id) => {
     const res = await api.get(`/clientes/${id}`);
-    return res.data;
+    return res;
   },
 
   // Cria um novo cliente
   create: async (novoCliente) => {
     const res = await api.post('/clientes', novoCliente);
-    return res.data;
+    return res;
   },
 
   // Atualiza um cliente
   update: async (id, dados) => {
     const res = await api.patch(`/clientes/${id}`, dados);
-    return res.data;
+    return res;
   },
 
   // Retorna histórico de compras
   getHistory: async (id) => {
     const res = await api.get(`/clientes/${id}/historico`);
-    return res.data;
+    return res;
   },
 
   // Busca simples para vinculação (datalist/autocomplete)
   search: async (term) => {
     if (!term) return [];
     const res = await api.get('/clientes');
-    const clientes = Array.isArray(res.data) ? res.data : (res.data?.data ?? res.data?.clientes ?? []);
+    const clientes = Array.isArray(res) ? res : (res?.data ?? res?.clientes ?? []);
     return clientes.filter(c => c.nome.toLowerCase().includes(term.toLowerCase())).slice(0, 5);
   }
 };
