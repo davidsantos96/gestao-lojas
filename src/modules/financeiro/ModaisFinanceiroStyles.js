@@ -1,4 +1,4 @@
-import styled, { keyframes } from 'styled-components'
+import styled, { keyframes, css } from 'styled-components'
 
 const spin = keyframes`
   from { transform: rotate(0deg); }
@@ -196,7 +196,7 @@ export const SubmitBtn = styled.button`
   gap: 8px;
 
   svg {
-    animation: ${props => props.$loading ? `${spin} 1s linear infinite` : 'none'};
+    animation: ${props => props.$loading ? css`${spin} 1s linear infinite` : 'none'};
   }
 `
 
