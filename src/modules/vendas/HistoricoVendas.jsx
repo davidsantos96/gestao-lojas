@@ -121,7 +121,7 @@ export function HistoricoVendas() {
               {vendas.map((v, i) => {
                 const cfg     = STATUS_CFG[v.status] ?? STATUS_CFG.concluida
                 const fpLabel = FORMAS_PAGAMENTO.find(f => f.value === v.forma_pagamento)?.label ?? v.forma_pagamento
-                const data    = new Date(v.criado_em).toLocaleDateString('pt-BR')
+                const data    = new Date(v.criadoEm ?? v.criado_em).toLocaleDateString('pt-BR')
                 const isOpen  = detalhe?.id === v.id
                 return (
                   <React.Fragment key={v.id}>

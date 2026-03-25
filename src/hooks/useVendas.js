@@ -82,6 +82,7 @@ export function useRankingProdutos(params = {}) {
 export function useCarrinho() {
   const [itens,          setItens]          = useState([])
   const [cliente,        setCliente]        = useState('')
+  const [clienteId,      setClienteId]      = useState(null)
   const [formaPagamento, setFormaPagamento] = useState('DINHEIRO')
   const [parcelas,       setParcelas]       = useState(1)
   const [desconto,       setDesconto]       = useState(0)
@@ -103,7 +104,7 @@ export function useCarrinho() {
   }, [removerItem])
 
   const limpar = useCallback(() => {
-    setItens([]); setCliente(''); setFormaPagamento('DINHEIRO'); setParcelas(1); setDesconto(0); setErro(null)
+    setItens([]); setCliente(''); setClienteId(null); setFormaPagamento('DINHEIRO'); setParcelas(1); setDesconto(0); setErro(null)
   }, [])
 
   const totalBruto   = itens.reduce((a, i) => a + i.preco_unitario * i.quantidade - (i.desconto ?? 0), 0)
@@ -115,6 +116,7 @@ export function useCarrinho() {
     try {
       const venda = await criarVenda({
         cliente:         cliente || undefined,
+        clienteId:       clienteId || undefined,
         forma_pagamento: formaPagamento,
         parcelas:        formaPagamento === 'CARTAO_CREDITO' ? parcelas : 1,
         desconto:        desconto || 0,
@@ -128,7 +130,7 @@ export function useCarrinho() {
     } finally {
       setLoading(false)
     }
-  }, [itens, cliente, formaPagamento, parcelas, desconto, limpar])
+  }, [itens, cliente, clienteId, formaPagamento, parcelas, desconto, limpar])
 
-  return { itens, cliente, formaPagamento, parcelas, desconto, totalBruto, totalLiquido, loading, erro, setCliente, setFormaPagamento, setParcelas, setDesconto, adicionarItem, removerItem, atualizarQtd, limpar, finalizar }
+  return { itens, cliente, clienteId, formaPagamento, parcelas, desconto, totalBruto, totalLiquido, loading, erro, setCliente, setClienteId, setFormaPagamento, setParcelas, setDesconto, adicionarItem, removerItem, atualizarQtd, limpar, finalizar }
 }

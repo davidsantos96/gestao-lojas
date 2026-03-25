@@ -26,7 +26,7 @@ export function NovaVenda({ produtos = [], onVendaConcluida }) {
   const {
     itens, cliente, formaPagamento, parcelas, desconto,
     totalBruto, totalLiquido, loading, erro,
-    setCliente, setFormaPagamento, setParcelas, setDesconto,
+    setCliente, setClienteId, setFormaPagamento, setParcelas, setDesconto,
     adicionarItem, removerItem, atualizarQtd, limpar, finalizar,
   } = useCarrinho()
 
@@ -204,11 +204,15 @@ export function NovaVenda({ produtos = [], onVendaConcluida }) {
                   onChange={async e => {
                     const val = e.target.value
                     setCliente(val)
+                    if (!val) { setClienteId(null); setSugestoesClientes([]); return }
                     if (val.length >= 3) {
                       const sug = await clienteService.search(val)
                       setSugestoesClientes(sug)
+                      const match = sug.find(c => c.nome === val)
+                      setClienteId(match ? match.id : null)
                     } else {
                       setSugestoesClientes([])
+                      setClienteId(null)
                     }
                   }} 
                   placeholder="Nome do cliente..." 
