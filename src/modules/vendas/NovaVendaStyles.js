@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import { Card } from '../../components/ui/Card';
 
 /* --- Success Screen --- */
@@ -37,15 +37,8 @@ export const SuccessText = styled.p`
   font-size: 14px;
   margin: 0;
   line-height: 1.6;
-
-  strong {
-    color: ${props => props.theme.colors.muted2};
-  }
-
-  .accent {
-    color: ${props => props.theme.colors.accent};
-    font-weight: 700;
-  }
+  strong { color: ${props => props.theme.colors.muted2}; }
+  .accent { color: ${props => props.theme.colors.accent}; font-weight: 700; }
 `;
 
 export const SuccessBtn = styled.button`
@@ -59,38 +52,26 @@ export const SuccessBtn = styled.button`
   cursor: pointer;
   margin-top: 4px;
   transition: opacity .15s;
-
-  &:hover {
-    opacity: 0.85;
-  }
+  &:hover { opacity: 0.85; }
 `;
 
 /* --- Main Layout --- */
-export const GridContainer = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 20px;
-  align-items: start;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-/* --- Left Column (Products) --- */
-export const LeftCol = styled.div`
+export const MainContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+  padding-bottom: 80px; /* Space for floating btn */
 `;
 
 export const SearchCard = styled(Card)`
-  padding: 12px 16px;
+  padding: 14px 18px;
+  background: ${props => props.theme.colors.surface};
+  border: 1px solid ${props => props.theme.colors.border};
 
   .search-wrapper {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
   }
 `;
 
@@ -100,11 +81,8 @@ export const SearchInput = styled.input`
   border: none;
   outline: none;
   color: ${props => props.theme.colors.text};
-  font-size: 13px;
-
-  &::placeholder {
-    color: ${props => props.theme.colors.muted};
-  }
+  font-size: 14px;
+  &::placeholder { color: ${props => props.theme.colors.muted}; }
 `;
 
 export const SearchClearBtn = styled.button`
@@ -113,178 +91,242 @@ export const SearchClearBtn = styled.button`
   cursor: pointer;
   color: ${props => props.theme.colors.muted};
   font-size: 11px;
-
-  &:hover {
-    color: ${props => props.theme.colors.text};
-  }
+  &:hover { color: ${props => props.theme.colors.text}; }
 `;
 
 export const ResultCount = styled.div`
   font-size: 12px;
   color: ${props => props.theme.colors.muted};
-  padding-left: 2px;
+  padding: 0 4px;
 `;
 
-export const ProductsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
-  gap: 10px;
-`;
-
-export const ProductCard = styled.button`
-  background: ${props => props.$inCart ? `${props.theme.colors.accent}14` : props.theme.colors.surface};
-  border: 1.5px solid ${props => props.$inCart ? props.theme.colors.accent : props.theme.colors.border};
-  border-radius: 12px;
-  padding: 14px;
-  cursor: pointer;
-  text-align: left;
-  transition: all .14s;
-  position: relative;
+/* --- Data Table --- */
+export const TableCard = styled(Card)`
+  padding: 0;
   overflow: hidden;
+  border: 1px solid ${props => props.theme.colors.border};
+`;
 
+export const Table = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+`;
+
+export const Thead = styled.thead`
+  background: ${props => props.theme.colors.s2};
+  border-bottom: 1px solid ${props => props.theme.colors.border};
+`;
+
+export const Th = styled.th`
+  padding: 12px 18px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: ${props => props.theme.colors.muted};
+  font-weight: 600;
+  &:last-child { text-align: right; }
+`;
+
+export const Tr = styled.tr`
+  border-bottom: 1px solid ${props => props.theme.colors.border};
+  transition: background 0.1s;
+  background: ${props => props.$inCart ? props.theme.colors.accent + '08' : 'transparent'};
+  
   &:hover {
-    border-color: ${props => props.$inCart ? props.theme.colors.accent : props.theme.colors.text};
+    background: ${props => props.$inCart ? props.theme.colors.accent + '12' : props.theme.colors.s2};
+  }
+  &:last-child { border-bottom: none; }
+`;
+
+export const Td = styled.td`
+  padding: 14px 18px;
+  vertical-align: middle;
+  &:last-child { text-align: right; }
+`;
+
+export const SkuBadge = styled.span`
+  font-family: monospace;
+  font-size: 11px;
+  background: ${props => props.theme.colors.bg};
+  border: 1px solid ${props => props.theme.colors.border};
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: ${props => props.theme.colors.muted};
+`;
+
+export const ProductInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  
+  .name {
+    font-size: 14px;
+    font-weight: 600;
+    color: ${props => props.theme.colors.text};
+  }
+  .tags {
+    display: flex;
+    gap: 6px;
+    font-size: 10px;
+    .stock { color: ${props => props.theme.colors.muted}; }
+    .incart { color: ${props => props.theme.colors.accent}; font-weight: 600; }
   }
 `;
 
-export const CartBadge = styled.div`
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: ${props => props.theme.colors.accent};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
+export const ProductPrice = styled.div`
+  font-size: 14px;
   font-weight: 700;
-  color: #051a12;
-`;
-
-export const ProductSku = styled.div`
-  font-size: 10px;
-  color: ${props => props.theme.colors.muted};
-  font-family: monospace;
-  letter-spacing: 0.5px;
-  margin-bottom: 5px;
-`;
-
-export const ProductName = styled.div`
-  font-size: 13px;
-  font-weight: 600;
   color: ${props => props.theme.colors.text};
-  margin-bottom: 8px;
-  line-height: 1.3;
-  padding-right: ${props => props.$inCart ? '20px' : '0'};
 `;
 
-export const ProductPriceRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
+export const ActionBtn = styled.button`
+  background: ${props => props.$inCart ? props.theme.colors.surface : props.theme.colors.accent + '15'};
+  border: 1px solid ${props => props.$inCart ? props.theme.colors.border : props.theme.colors.accent + '40'};
+  color: ${props => props.$inCart ? props.theme.colors.muted : props.theme.colors.accent};
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
 
-export const ProductPrice = styled.span`
-  font-size: 15px;
-  font-weight: 800;
-  color: ${props => props.theme.colors.accent};
-`;
-
-export const ProductStock = styled.span`
-  font-size: 10px;
-  color: ${props => props.theme.colors.muted};
-  background: ${props => props.theme.colors.s2};
-  padding: 2px 6px;
-  border-radius: 5px;
-  border: 1px solid ${props => props.theme.colors.border};
+  &:hover {
+    background: ${props => props.$inCart ? props.theme.colors.s3 : props.theme.colors.accent + '30'};
+  }
 `;
 
 export const EmptyProducts = styled.div`
-  grid-column: 1 / -1;
   text-align: center;
   color: ${props => props.theme.colors.muted};
-  padding: 48px 0;
+  padding: 60px 0;
   font-size: 13px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 `;
 
-/* --- Right Column (Cart) --- */
-export const RightCol = styled.div`
+/* --- Floating Button --- */
+export const FloatingCartBtn = styled.button`
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: ${props => props.theme.colors.surface};
+  border: 1px solid ${props => props.theme.colors.border};
+  border-radius: 30px;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  z-index: 100;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  }
+
+  .icon-wrap {
+    color: ${props => props.theme.colors.accent};
+    position: relative;
+    display: flex;
+  }
+  
+  .text-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    
+    .lbl { font-size: 11px; color: ${props => props.theme.colors.muted}; text-transform: uppercase; letter-spacing: 1px; }
+    .val { font-size: 14px; font-weight: 800; color: ${props => props.theme.colors.text}; }
+  }
+
+  .badge {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    background: ${props => props.theme.colors.accent};
+    color: #000;
+    font-size: 10px;
+    font-weight: 800;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+`;
+
+/* --- Drawer Overlay --- */
+const fadeIn = keyframes`from { opacity: 0; } to { opacity: 1; }`;
+const slideIn = keyframes`from { transform: translateX(100%); } to { transform: translateX(0); }`;
+
+export const DrawerOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 900;
+  display: flex;
+  justify-content: flex-end;
+  animation: ${fadeIn} 0.2s ease-out;
+`;
+
+export const DrawerContent = styled.div`
+  width: 420px;
+  max-width: 100%;
+  height: 100%;
+  background: ${props => props.theme.colors.surface};
+  border-left: 1px solid ${props => props.theme.colors.border};
+  box-shadow: -10px 0 40px rgba(0,0,0,0.5);
   display: flex;
   flex-direction: column;
-  gap: 0;
-  position: sticky;
-  top: 0;
+  animation: ${slideIn} 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 `;
 
-export const CartCard = styled(Card)`
-  padding: 0;
-  overflow: hidden;
-`;
-
-export const CartHeader = styled.div`
+export const DrawerHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 16px 18px;
+  justify-content: space-between;
+  padding: 20px 24px;
   border-bottom: 1px solid ${props => props.theme.colors.border};
   background: ${props => props.theme.colors.s2};
-`;
-
-export const CartIconWrap = styled.div`
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: ${props => props.theme.colors.blue}18;
-  border: 1px solid ${props => props.theme.colors.blue}30;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-export const CartTitleWrap = styled.div`
-  flex: 1;
   
   .title {
-    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
     font-weight: 700;
     color: ${props => props.theme.colors.text};
   }
-  .subtitle {
-    font-size: 11px;
-    color: ${props => props.theme.colors.muted};
-  }
 `;
 
-export const CartClearBtn = styled.button`
+export const DrawerCloseBtn = styled.button`
   background: none;
-  border: 1px solid ${props => props.theme.colors.border};
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 11px;
+  border: none;
   color: ${props => props.theme.colors.muted};
-  padding: 4px 8px;
-  transition: all .15s;
-
-  &:hover {
-    color: ${props => props.theme.colors.text};
-    background: ${props => props.theme.colors.s2};
-  }
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  &:hover { background: ${props => props.theme.colors.s3}; color: ${props => props.theme.colors.text}; }
 `;
 
 export const CartBody = styled.div`
-  padding: 0 18px;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px;
 `;
 
 export const EmptyCart = styled.div`
   text-align: center;
   color: ${props => props.theme.colors.muted};
-  padding: 32px 0;
+  padding: 40px 0;
   font-size: 13px;
   display: flex;
   flex-direction: column;
@@ -296,14 +338,14 @@ export const CartList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 8px 0;
+  padding: 12px 0;
 `;
 
 export const CartItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 0;
+  gap: 10px;
+  padding: 14px 0;
   border-bottom: 1px solid ${props => props.theme.colors.border};
 `;
 
@@ -313,45 +355,43 @@ export const CartItemInfo = styled.div`
 `;
 
 export const CartItemName = styled.div`
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: ${props => props.theme.colors.text};
+  margin-bottom: 4px;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 `;
 
 export const CartItemPrice = styled.div`
-  font-size: 11px;
+  font-size: 12px;
   color: ${props => props.theme.colors.muted};
-  margin-top: 2px;
 `;
 
 export const QtyControls = styled.div`
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
 `;
 
 export const QtyBtn = styled.button`
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 6px;
   border: 1px solid ${props => props.theme.colors.border};
   background: ${props => props.theme.colors.s2};
   cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  color: ${props => props.theme.colors.text};
   opacity: ${props => props.disabled ? 0.4 : 1};
   display: flex;
   align-items: center;
   justify-content: center;
-
-  &:hover:not(:disabled) {
-    background: ${props => props.theme.colors.s3};
-  }
+  &:hover:not(:disabled) { background: ${props => props.theme.colors.s3}; }
 `;
 
 export const QtyValue = styled.span`
-  width: 26px;
+  width: 24px;
   text-align: center;
   font-size: 13px;
   font-weight: 600;
@@ -359,10 +399,10 @@ export const QtyValue = styled.span`
 `;
 
 export const CartItemTotal = styled.span`
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: ${props => props.theme.colors.text};
-  min-width: 58px;
+  width: 70px;
   text-align: right;
 `;
 
@@ -370,16 +410,19 @@ export const RemoveBtn = styled.button`
   background: none;
   border: none;
   cursor: pointer;
-  padding: 3px;
+  padding: 4px;
+  color: ${props => props.theme.colors.muted};
+  &:hover { color: ${props => props.theme.colors.red}; }
 `;
 
 /* --- Form --- */
 export const FormArea = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding-top: 14px;
-  padding-bottom: 18px;
+  gap: 16px;
+  padding: 24px;
+  background: ${props => props.theme.colors.s2};
+  border-top: 1px solid ${props => props.theme.colors.border};
 `;
 
 export const FormLabel = styled.label`
@@ -389,114 +432,133 @@ export const FormLabel = styled.label`
   letter-spacing: 1.5px;
   text-transform: uppercase;
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 `;
 
 export const FormInput = styled.input`
   width: 100%;
-  padding: 10px 13px;
-  background: rgba(255,255,255,.04);
+  padding: 12px 14px;
   background: ${props => props.theme.colors.bg};
   border: 1px solid ${props => props.theme.colors.border};
-  border-radius: 9px;
+  border-radius: 8px;
   color: ${props => props.theme.colors.text};
-  font-size: 13px;
+  font-size: 14px;
   outline: none;
   transition: border-color .15s;
   box-sizing: border-box;
   color-scheme: ${props => props.theme.title};
-
-  &:focus {
-    border-color: ${props => props.theme.colors.accent};
-  }
-
-  &::placeholder {
-    color: ${props => props.theme.colors.muted};
-  }
+  &:focus { border-color: ${props => props.theme.colors.accent}; }
+  &::placeholder { color: ${props => props.theme.colors.muted}; }
 `;
 
 export const FormSelect = styled.select`
   width: 100%;
-  padding: 10px 13px;
+  padding: 12px 14px;
   appearance: none;
   background: ${props => props.theme.colors.bg};
   border: 1px solid ${props => props.theme.colors.border};
-  border-radius: 9px;
+  border-radius: 8px;
   color: ${props => props.theme.colors.text};
-  font-size: 13px;
+  font-size: 14px;
   outline: none;
   transition: border-color .15s;
   box-sizing: border-box;
   color-scheme: ${props => props.theme.title};
-
-  &:focus {
-    border-color: ${props => props.theme.colors.accent};
-  }
-
-  option {
-    background: ${props => props.theme.colors.s2};
-    color: ${props => props.theme.colors.text};
-  }
+  &:focus { border-color: ${props => props.theme.colors.accent}; }
+  option { background: ${props => props.theme.colors.s2}; color: ${props => props.theme.colors.text}; }
 `;
 
 export const TotalsBox = styled.div`
-  background: ${props => props.theme.colors.s2};
+  background: ${props => props.theme.colors.bg};
   border-radius: 10px;
-  padding: 12px 14px;
+  padding: 16px;
   border: 1px solid ${props => props.theme.colors.border};
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 `;
 
 export const TotalRow = styled.div`
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: 13px;
   color: ${props => props.$discount ? props.theme.colors.red : props.theme.colors.muted};
 `;
 
 export const TotalRowMain = styled.div`
   display: flex;
   justify-content: space-between;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 800;
   color: ${props => props.theme.colors.text};
-  padding-top: 8px;
-  border-top: 1px solid ${props => props.theme.colors.border};
-  margin-top: 2px;
-
-  .accent {
-    color: ${props => props.theme.colors.accent};
-  }
+  padding-top: 10px;
+  border-top: 1px dashed ${props => props.theme.colors.border};
+  margin-top: 4px;
+  .accent { color: ${props => props.theme.colors.accent}; }
 `;
 
 export const ErrorBox = styled.div`
-  font-size: 12px;
+  font-size: 13px;
   color: ${props => props.theme.colors.red};
-  line-height: 1.5;
   background: rgba(255,91,107,.08);
   border: 1px solid rgba(255,91,107,.25);
-  border-radius: 9px;
-  padding: 10px 14px;
+  border-radius: 8px;
+  padding: 12px;
 `;
 
 export const SubmitBtn = styled.button`
-  padding: 14px;
-  border-radius: 11px;
+  padding: 16px;
+  border-radius: 10px;
   border: none;
   font-weight: 800;
-  font-size: 14px;
+  font-size: 15px;
   letter-spacing: 0.2px;
   transition: all .2s;
-  
-  background: ${props => props.disabled ? props.theme.colors.s3 : `linear-gradient(135deg, ${props.theme.colors.accent}, ${props.theme.colors.accentD})`};
+  background: ${props => props.disabled ? props.theme.colors.s3 : props.theme.colors.accent};
   color: ${props => props.disabled ? props.theme.colors.muted : '#051a12'};
   cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   box-shadow: ${props => props.disabled ? 'none' : `0 4px 18px ${props.theme.colors.accent}35`};
-
   &:hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: 0 6px 22px ${props => props.theme.colors.accent}45;
+  }
+`;
+
+export const PaymentMethodGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+`;
+
+export const PaymentMethodBtn = styled.button`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 6px;
+  border-radius: 8px;
+  background: ${props => props.$active ? props.theme.colors.accent + '15' : props.theme.colors.bg};
+  border: 1px solid ${props => props.$active ? props.theme.colors.accent : props.theme.colors.border};
+  color: ${props => props.$active ? props.theme.colors.accent : props.theme.colors.muted};
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  .icon-holder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  span {
+    font-size: 11px;
+    font-weight: ${props => props.$active ? '700' : '600'};
+    text-align: center;
+    line-height: 1.1;
+  }
+
+  &:hover {
+    border-color: ${props => props.$active ? props.theme.colors.accent : props.theme.colors.text};
+    color: ${props => props.$active ? props.theme.colors.accent : props.theme.colors.text};
   }
 `;

@@ -1,5 +1,5 @@
 import { useState, useContext } from 'react'
-import { Plus, Minus, Trash2, ShoppingCart, CheckCircle, Search, Package, Tag as TagIcon } from 'lucide-react'
+import { Plus, Minus, Trash2, ShoppingCart, CheckCircle, Search, Package, Tag as TagIcon, X, Banknote, QrCode, CreditCard, Barcode, LayoutGrid } from 'lucide-react'
 import { fmtBRL } from '../../utils/format'
 import { useCarrinho } from '../../hooks/useVendas'
 import { FORMAS_PAGAMENTO } from '../../services/vendasService'
@@ -7,20 +7,22 @@ import { clienteService } from '../../services/clienteService'
 import { ThemeContext } from '../../contexts/ThemeContext'
 import {
   SuccessContainer, SuccessIconWrap, SuccessTitle, SuccessText, SuccessBtn,
-  GridContainer, LeftCol, SearchCard, SearchInput, SearchClearBtn, ResultCount,
-  ProductsGrid, ProductCard, CartBadge, ProductSku, ProductName, ProductPriceRow, ProductPrice, ProductStock,
-  EmptyProducts, RightCol, CartCard, CartHeader, CartIconWrap, CartTitleWrap, CartClearBtn,
+  MainContainer, SearchCard, SearchInput, SearchClearBtn,
+  TableCard, Table, Thead, Th, Tr, Td, SkuBadge, ProductInfo, ProductPrice, ActionBtn, EmptyProducts,
+  FloatingCartBtn,
+  DrawerOverlay, DrawerContent, DrawerHeader, DrawerCloseBtn,
   CartBody, EmptyCart, CartList, CartItem, CartItemInfo, CartItemName, CartItemPrice,
   QtyControls, QtyBtn, QtyValue, CartItemTotal, RemoveBtn, FormArea, FormLabel,
-  FormInput, FormSelect, TotalsBox, TotalRow, TotalRowMain, ErrorBox, SubmitBtn
+  FormInput, FormSelect, TotalsBox, TotalRow, TotalRowMain, ErrorBox, SubmitBtn,
+  PaymentMethodGrid, PaymentMethodBtn
 } from './NovaVendaStyles'
 
 export function NovaVenda({ produtos = [], onVendaConcluida }) {
   const [busca, setBusca] = useState('')
   const [vendaConcluida, setVendaConcluida] = useState(null)
   const [sugestoesClientes, setSugestoesClientes] = useState([])
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   
-  // Apenas para passar a cor correta de ícones se necessário
   const { theme } = useContext(ThemeContext)
 
   const {
@@ -39,7 +41,11 @@ export function NovaVenda({ produtos = [], onVendaConcluida }) {
 
   const handleFinalizar = async () => {
     const venda = await finalizar()
-    if (venda) { setVendaConcluida(venda); onVendaConcluida?.() }
+    if (venda) { 
+      setVendaConcluida(venda)
+      setIsDrawerOpen(false)
+      onVendaConcluida?.() 
+    }
   }
 
   /* ── Tela de sucesso ── */
@@ -66,136 +72,151 @@ export function NovaVenda({ produtos = [], onVendaConcluida }) {
     </SuccessContainer>
   )
 
+  const qtyCarrinho = itens.reduce((acc, i) => acc + i.quantidade, 0)
+
   return (
-    <GridContainer>
-
-      {/* ── Coluna Esquerda: Produtos ── */}
-      <LeftCol>
-
+    <>
+      <MainContainer>
         {/* Barra de busca */}
         <SearchCard>
           <div className="search-wrapper">
-            <Search size={15} color={theme.colors.muted} />
+            <Search size={18} color={theme.colors.muted} />
             <SearchInput
               value={busca}
               onChange={e => setBusca(e.target.value)}
               placeholder="Buscar produto por nome ou SKU…"
+              autoFocus
             />
             {busca && (
               <SearchClearBtn onClick={() => setBusca('')}>
-                limpar
+                LIMPAR
               </SearchClearBtn>
             )}
           </div>
         </SearchCard>
 
-        {/* Contador de resultados */}
-        {busca && (
-          <ResultCount>
-            {produtosFiltrados.length} produto{produtosFiltrados.length !== 1 ? 's' : ''} encontrado{produtosFiltrados.length !== 1 ? 's' : ''}
-          </ResultCount>
-        )}
-
-        {/* Grid de produtos */}
-        <ProductsGrid>
-          {produtosFiltrados.slice(0, 24).map(p => {
-            const noCarrinho = itens.find(i => i.produto_id === p.id)
-            return (
-              <ProductCard
-                key={p.id}
-                onClick={() => adicionarItem(p)}
-                $inCart={!!noCarrinho}
-              >
-                {noCarrinho && (
-                  <CartBadge>
-                    {noCarrinho.quantidade}
-                  </CartBadge>
-                )}
-                <ProductSku>{p.sku}</ProductSku>
-                <ProductName $inCart={!!noCarrinho}>{p.nome}</ProductName>
-                <ProductPriceRow>
-                  <ProductPrice>{fmtBRL(p.preco)}</ProductPrice>
-                  <ProductStock>{p.estoque} un</ProductStock>
-                </ProductPriceRow>
-              </ProductCard>
-            )
-          })}
-
+        {/* Tabela de Produtos */}
+        <TableCard>
+          <Table>
+            <Thead>
+              <Tr>
+                <Th>Produto</Th>
+                <Th>Estoque</Th>
+                <Th>Preço</Th>
+                <Th>Ação</Th>
+              </Tr>
+            </Thead>
+            <tbody>
+              {produtosFiltrados.slice(0, 30).map(p => {
+                const itemCarrinho = itens.find(i => i.produto_id === p.id)
+                return (
+                  <Tr key={p.id} $inCart={!!itemCarrinho}>
+                    <Td>
+                      <ProductInfo>
+                        <div className="name">{p.nome}</div>
+                        <div className="tags">
+                          <SkuBadge>{p.sku}</SkuBadge>
+                          {itemCarrinho && <span className="incart">No carrinho ({itemCarrinho.quantidade})</span>}
+                        </div>
+                      </ProductInfo>
+                    </Td>
+                    <Td>
+                      <span style={{ color: theme.colors.muted, fontSize: 13 }}>{p.estoque} un</span>
+                    </Td>
+                    <Td>
+                      <ProductPrice>{fmtBRL(p.preco)}</ProductPrice>
+                    </Td>
+                    <Td>
+                      <ActionBtn 
+                        onClick={() => adicionarItem(p)}
+                        $inCart={!!itemCarrinho}
+                      >
+                        {itemCarrinho ? '+ Adicionar Mais' : '+ Adicionar'}
+                      </ActionBtn>
+                    </Td>
+                  </Tr>
+                )
+              })}
+            </tbody>
+          </Table>
+          
           {produtosFiltrados.length === 0 && (
             <EmptyProducts>
               <Package size={32} color={theme.colors.border} />
-              <span>Nenhum produto disponível em estoque.</span>
+              <span>Nenhum produto encontrado.</span>
             </EmptyProducts>
           )}
-        </ProductsGrid>
-      </LeftCol>
+        </TableCard>
+      </MainContainer>
 
-      {/* ── Coluna Direita: Carrinho ── */}
-      <RightCol>
-        <CartCard>
+      {/* Floating Button */}
+      <FloatingCartBtn onClick={() => setIsDrawerOpen(true)}>
+        <div className="icon-wrap">
+          <ShoppingCart size={24} />
+          {qtyCarrinho > 0 && <div className="badge">{qtyCarrinho}</div>}
+        </div>
+        <div className="text-wrap">
+          <span className="lbl">Carrinho</span>
+          <span className="val">{fmtBRL(totalLiquido)}</span>
+        </div>
+      </FloatingCartBtn>
 
-          {/* Cabeçalho do carrinho */}
-          <CartHeader>
-            <CartIconWrap>
-              <ShoppingCart size={15} color={theme.colors.blue} />
-            </CartIconWrap>
-            <CartTitleWrap>
-              <div className="title">Carrinho</div>
-              <div className="subtitle">
-                {itens.length === 0 ? 'Vazio' : `${itens.length} item${itens.length !== 1 ? 's' : ''}`}
+      {/* Drawer */}
+      {isDrawerOpen && (
+        <DrawerOverlay onClick={() => setIsDrawerOpen(false)}>
+          <DrawerContent onClick={e => e.stopPropagation()}>
+            <DrawerHeader>
+              <div className="title">
+                <ShoppingCart size={18} color={theme.colors.accent} />
+                Checkout
               </div>
-            </CartTitleWrap>
-            {itens.length > 0 && (
-              <CartClearBtn onClick={limpar}>
-                Limpar
-              </CartClearBtn>
-            )}
-          </CartHeader>
+              <DrawerCloseBtn onClick={() => setIsDrawerOpen(false)}>
+                <X size={20} />
+              </DrawerCloseBtn>
+            </DrawerHeader>
 
-          <CartBody>
-            {/* Itens do carrinho */}
-            {itens.length === 0 ? (
-              <EmptyCart>
-                <TagIcon size={24} color={theme.colors.border} />
-                <span>Clique em um produto para adicionar</span>
-              </EmptyCart>
-            ) : (
-              <CartList>
-                {itens.map(item => (
-                  <CartItem key={item.produto_id}>
-                    <CartItemInfo>
-                      <CartItemName>{item.nome}</CartItemName>
-                      <CartItemPrice>
-                        {fmtBRL(item.preco_unitario)} × {item.quantidade}
-                      </CartItemPrice>
-                    </CartItemInfo>
+            <CartBody>
+              {itens.length === 0 ? (
+                <EmptyCart>
+                  <TagIcon size={24} color={theme.colors.border} />
+                  <span>Nenhum item adicionado</span>
+                </EmptyCart>
+              ) : (
+                <CartList>
+                  {itens.map(item => (
+                    <CartItem key={item.produto_id}>
+                      <CartItemInfo>
+                        <CartItemName>{item.nome}</CartItemName>
+                        <CartItemPrice>
+                          {fmtBRL(item.preco_unitario)}
+                        </CartItemPrice>
+                      </CartItemInfo>
 
-                    {/* Controles de quantidade */}
-                    <QtyControls>
-                      <QtyBtn onClick={() => atualizarQtd(item.produto_id, item.quantidade - 1)}>
-                        <Minus size={10} color={theme.colors.muted} />
-                      </QtyBtn>
-                      <QtyValue>{item.quantidade}</QtyValue>
-                      <QtyBtn
-                        onClick={() => atualizarQtd(item.produto_id, item.quantidade + 1)}
-                        disabled={item.quantidade >= item.estoque}
-                      >
-                        <Plus size={10} color={theme.colors.muted} />
-                      </QtyBtn>
-                    </QtyControls>
+                      <QtyControls>
+                        <QtyBtn onClick={() => atualizarQtd(item.produto_id, item.quantidade - 1)}>
+                          <Minus size={12} />
+                        </QtyBtn>
+                        <QtyValue>{item.quantidade}</QtyValue>
+                        <QtyBtn
+                          onClick={() => atualizarQtd(item.produto_id, item.quantidade + 1)}
+                          disabled={item.quantidade >= item.estoque}
+                        >
+                          <Plus size={12} />
+                        </QtyBtn>
+                      </QtyControls>
 
-                    <CartItemTotal>
-                      {fmtBRL(item.preco_unitario * item.quantidade)}
-                    </CartItemTotal>
-                    <RemoveBtn onClick={() => removerItem(item.produto_id)}>
-                      <Trash2 size={13} color={theme.colors.red} />
-                    </RemoveBtn>
-                  </CartItem>
-                ))}
-              </CartList>
-            )}
+                      <CartItemTotal>
+                        {fmtBRL(item.preco_unitario * item.quantidade)}
+                      </CartItemTotal>
+                      <RemoveBtn onClick={() => removerItem(item.produto_id)}>
+                        <Trash2 size={16} />
+                      </RemoveBtn>
+                    </CartItem>
+                  ))}
+                </CartList>
+              )}
+            </CartBody>
 
-            {/* Formulário */}
             <FormArea>
               <div>
                 <FormLabel>Cliente (opcional)</FormLabel>
@@ -224,30 +245,57 @@ export function NovaVenda({ produtos = [], onVendaConcluida }) {
                   ))}
                 </datalist>
               </div>
+              
               <div>
-                <FormLabel>Forma de Pagamento</FormLabel>
-                <FormSelect value={formaPagamento} onChange={e => setFormaPagamento(e.target.value)}>
-                  {FORMAS_PAGAMENTO.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-                </FormSelect>
-              </div>
-              {formaPagamento === 'CARTAO_CREDITO' && (
-                <div>
-                  <FormLabel>Parcelas</FormLabel>
-                  <FormSelect value={parcelas} onChange={e => setParcelas(Number(e.target.value))}>
-                    {[1, 2, 3, 4, 6, 8, 10, 12].map(n => <option key={n} value={n}>{n === 1 ? 'À vista' : `${n}x`}</option>)}
-                  </FormSelect>
-                </div>
-              )}
-              <div>
-                <FormLabel>Desconto (R$)</FormLabel>
-                <FormInput
-                  type="number" min="0" step="0.01"
-                  value={desconto} onChange={e => setDesconto(Number(e.target.value))}
-                  placeholder="0,00"
-                />
+                <FormLabel>Pagamento</FormLabel>
+                <PaymentMethodGrid>
+                  {FORMAS_PAGAMENTO.map(f => {
+                    let Icon = CreditCard
+                    if (f.value === 'DINHEIRO') Icon = Banknote
+                    if (f.value === 'PIX') Icon = QrCode
+                    if (f.value === 'BOLETO') Icon = Barcode
+                    if (f.value === 'OUTRO') Icon = LayoutGrid
+                    
+                    let labelStr = f.label
+                    if (f.value === 'CARTAO_CREDITO') labelStr = 'Crédito'
+                    if (f.value === 'CARTAO_DEBITO') labelStr = 'Débito'
+                    
+                    return (
+                      <PaymentMethodBtn
+                        key={f.value}
+                        $active={formaPagamento === f.value}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setFormaPagamento(f.value)
+                        }}
+                      >
+                        <div className="icon-holder"><Icon size={20} /></div>
+                        <span>{labelStr}</span>
+                      </PaymentMethodBtn>
+                    )
+                  })}
+                </PaymentMethodGrid>
               </div>
 
-              {/* Totais */}
+              <div style={{ display: 'grid', gridTemplateColumns: formaPagamento === 'CARTAO_CREDITO' ? '1fr 1fr' : '1fr', gap: '12px' }}>
+                {formaPagamento === 'CARTAO_CREDITO' && (
+                  <div>
+                    <FormLabel>Parcelas</FormLabel>
+                    <FormSelect value={parcelas} onChange={e => setParcelas(Number(e.target.value))}>
+                      {[1, 2, 3, 4, 6, 8, 10, 12].map(n => <option key={n} value={n}>{n === 1 ? 'À vista' : `${n}x`}</option>)}
+                    </FormSelect>
+                  </div>
+                )}
+                <div>
+                  <FormLabel>Desconto (R$)</FormLabel>
+                  <FormInput
+                    type="number" min="0" step="0.01"
+                    value={desconto} onChange={e => setDesconto(Number(e.target.value))}
+                    placeholder="0,00"
+                  />
+                </div>
+              </div>
+
               <TotalsBox>
                 <TotalRow>
                   <span>Subtotal</span>
@@ -265,21 +313,15 @@ export function NovaVenda({ produtos = [], onVendaConcluida }) {
                 </TotalRowMain>
               </TotalsBox>
 
-              {erro && (
-                <ErrorBox>{erro}</ErrorBox>
-              )}
+              {erro && <ErrorBox>{erro}</ErrorBox>}
 
-              <SubmitBtn
-                onClick={handleFinalizar}
-                disabled={loading || !itens.length}
-              >
-                {loading ? 'Registrando…' : '✓ Finalizar Venda'}
+              <SubmitBtn onClick={handleFinalizar} disabled={loading || !itens.length}>
+                {loading ? 'Processando…' : 'Finalizar Venda'}
               </SubmitBtn>
             </FormArea>
-          </CartBody>
-        </CartCard>
-      </RightCol>
-
-    </GridContainer>
+          </DrawerContent>
+        </DrawerOverlay>
+      )}
+    </>
   )
 }
