@@ -4,7 +4,7 @@ export const clienteService = {
   // Retorna todos os clientes com segmentação atualizada
   getAll: async () => {
     const res = await api.get('/clientes');
-    const clientes = res.data;
+    const clientes = Array.isArray(res.data) ? res.data : (res.data?.data ?? res.data?.clientes ?? []);
 
     const hoje = new Date();
     const seisMesesAtras = new Date();
@@ -57,7 +57,7 @@ export const clienteService = {
   search: async (term) => {
     if (!term) return [];
     const res = await api.get('/clientes');
-    const clientes = res.data;
+    const clientes = Array.isArray(res.data) ? res.data : (res.data?.data ?? res.data?.clientes ?? []);
     return clientes.filter(c => c.nome.toLowerCase().includes(term.toLowerCase())).slice(0, 5);
   }
 };
