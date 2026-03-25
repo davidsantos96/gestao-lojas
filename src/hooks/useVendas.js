@@ -13,9 +13,10 @@ export function useVendas(params = {}) {
 
   const { data: response, loading, error, execute: refetch } = useAsync(fetchFn)
 
-  const vendas = response?.data ?? []
+  const rawVendas = Array.isArray(response) ? response : (response?.data ?? [])
+  const vendas = rawVendas.map(v => ({ ...v, status: v.status?.toLowerCase() ?? v.status }))
   const pagination = {
-    total: response?.total ?? 0,
+    total: response?.total ?? rawVendas.length,
     page: response?.page ?? 1,
     limit: response?.limit ?? 50,
     pages: response?.pages ?? 1
