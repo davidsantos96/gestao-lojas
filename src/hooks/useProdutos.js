@@ -25,7 +25,7 @@ export function useProdutos() {
 
   const fetchFn = useCallback(() => {
     if (USE_MOCK) return Promise.resolve({ data: MOCK_PRODUTOS, total: MOCK_PRODUTOS.length })
-    return getProdutos()
+    return getProdutos({ limit: 9999 })
   }, [])
 
   const { data: response, loading, error, execute: refetch, setData: setResponse } = useAsync(fetchFn)
@@ -49,7 +49,7 @@ export function useProdutos() {
   }, [produtos, busca, filtroStatus])
 
   const resumo = useMemo(() => ({
-    totalSkus:     produtos.length,
+    totalSkus:     response?.total ?? produtos.length,
     totalUnidades: produtos.reduce((a, p) => a + (p.estoque ?? 0), 0),
     valorTotal:    produtos.reduce((a, p) => a + (p.estoque ?? 0) * (p.custo ?? 0), 0),
     alertas:       produtos.filter(p => p.status !== 'ok').length,
