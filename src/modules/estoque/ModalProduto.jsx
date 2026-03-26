@@ -267,7 +267,7 @@ export function ModalProduto({ produto, onClose, onSubmit }) {
               <FormInput 
                 value={form.sku} 
                 onChange={e => set('sku', e.target.value.toUpperCase())} 
-                disabled={loading || isEdit} 
+                disabled={loading} 
                 placeholder="CAM-001" 
               />
             </div>
