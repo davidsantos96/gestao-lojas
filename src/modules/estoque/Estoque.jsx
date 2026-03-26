@@ -117,7 +117,7 @@ export function Estoque() {
         {loadProd
           ? Array.from({ length: 4 }).map((_, i) => <SkeletonKPI key={i} />)
           : <>
-              <KPI label="Total Códigos"    value={resumo.totalSkus}          sub="produtos ativos"  color={theme.colors.blue}   icon={Package}       />
+              <KPI label="Total Códigos"    value={produtosFiltrados.length}  sub={`de ${resumo.totalSkus} cadastrados`}  color={theme.colors.blue}   icon={Package}       />
               <KPI label="Unidades"      value={resumo.totalUnidades}       sub="em estoque"       color={theme.colors.accent} icon={Boxes}         />
               <KPI label="Valor Estoque" value={fmtBRL(resumo.valorTotal)} sub="pelo custo"       color={theme.colors.yellow} icon={DollarSign}    />
               <KPI label="Alertas"       value={resumo.alertas}             sub="precisam atenção" color={theme.colors.red}    icon={AlertTriangle} />
