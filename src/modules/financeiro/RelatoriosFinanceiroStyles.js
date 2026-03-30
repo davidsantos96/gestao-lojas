@@ -92,7 +92,7 @@ export const MetricsCol = styled.div`
 
 export const MetricLabel = styled.div`
   font-size: 12px;
-  color: ${props => props.theme.colors.muted};
+  color: ${props => props.theme.colors.muted2};
   font-family: monospace;
   text-transform: uppercase;
   letter-spacing: 1px;

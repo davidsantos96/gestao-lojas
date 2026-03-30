@@ -54,4 +54,11 @@ export default createGlobalStyle`
   ::-webkit-scrollbar-thumb:hover {
     background: var(--c-muted);
   }
+
+  /* ─── Print: módulo de Relatórios ───────────────────────────── */
+  @media print {
+    [data-print-hide] { display: none !important; }
+    [data-print-expand] { width: 100% !important; margin-left: 0 !important; }
+    body { background: #fff !important; color: #000 !important; }
+  }
 `;

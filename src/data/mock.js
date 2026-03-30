@@ -60,6 +60,99 @@ export const dreData = [
   { label: 'Lucro Líquido',             valor: 20600,  tipo: 'total'     },
 ]
 
+// ─── Clientes com histórico de compras (para RFM) ─────────────────────────────
+export const clientes = [
+  {
+    id: 1, nome: 'Maria Santos', email: 'maria@email.com', cidade: 'São Paulo',
+    historico_compras: [
+      { data: '25/03/2026', valor: 349.80, qtd_itens: 3 },
+      { data: '10/03/2026', valor: 149.90, qtd_itens: 1 },
+      { data: '20/02/2026', valor: 479.70, qtd_itens: 4 },
+      { data: '05/02/2026', valor: 239.90, qtd_itens: 1 },
+      { data: '15/01/2026', valor: 199.80, qtd_itens: 2 },
+    ],
+  },
+  {
+    id: 2, nome: 'Carlos Oliveira', email: 'carlos@email.com', cidade: 'São Paulo',
+    historico_compras: [
+      { data: '28/03/2026', valor: 239.90, qtd_itens: 1 },
+      { data: '01/03/2026', valor: 299.80, qtd_itens: 2 },
+      { data: '10/02/2026', valor: 149.90, qtd_itens: 1 },
+      { data: '20/01/2026', valor: 539.70, qtd_itens: 4 },
+    ],
+  },
+  {
+    id: 3, nome: 'Ana Beatriz', email: 'ana@email.com', cidade: 'Campinas',
+    historico_compras: [
+      { data: '26/03/2026', valor: 189.90, qtd_itens: 1 },
+      { data: '14/03/2026', valor: 109.80, qtd_itens: 2 },
+      { data: '28/02/2026', valor: 349.80, qtd_itens: 3 },
+      { data: '14/02/2026', valor: 79.90,  qtd_itens: 1 },
+      { data: '01/02/2026', valor: 239.90, qtd_itens: 1 },
+      { data: '10/01/2026', valor: 419.80, qtd_itens: 3 },
+    ],
+  },
+  {
+    id: 4, nome: 'Pedro Lima', email: 'pedro@email.com', cidade: 'Santos',
+    historico_compras: [
+      { data: '05/02/2026', valor: 149.90, qtd_itens: 1 },
+      { data: '10/01/2026', valor: 299.80, qtd_itens: 2 },
+    ],
+  },
+  {
+    id: 5, nome: 'Fernanda Costa', email: 'fernanda@email.com', cidade: 'São Paulo',
+    historico_compras: [
+      { data: '22/03/2026', valor: 629.70, qtd_itens: 5 },
+      { data: '08/03/2026', valor: 189.90, qtd_itens: 1 },
+      { data: '18/02/2026', valor: 479.80, qtd_itens: 4 },
+      { data: '04/02/2026', valor: 239.90, qtd_itens: 2 },
+      { data: '20/01/2026', valor: 149.90, qtd_itens: 1 },
+      { data: '05/01/2026', valor: 399.80, qtd_itens: 3 },
+      { data: '20/12/2025', valor: 189.90, qtd_itens: 1 },
+    ],
+  },
+  {
+    id: 6, nome: 'Boutique Nova', email: 'boutique@email.com', cidade: 'Ribeirão Preto',
+    historico_compras: [
+      { data: '15/03/2026', valor: 2400.00, qtd_itens: 18 },
+      { data: '10/02/2026', valor: 1800.00, qtd_itens: 14 },
+      { data: '12/01/2026', valor: 3200.00, qtd_itens: 22 },
+      { data: '05/12/2025', valor: 2600.00, qtd_itens: 20 },
+    ],
+  },
+  {
+    id: 7, nome: 'João Victor', email: 'joao@email.com', cidade: 'São Paulo',
+    historico_compras: [
+      { data: '10/01/2026', valor: 239.90, qtd_itens: 1 },
+      { data: '05/11/2025', valor: 149.90, qtd_itens: 1 },
+    ],
+  },
+  {
+    id: 8, nome: 'Lucia Ferreira', email: 'lucia@email.com', cidade: 'Santo André',
+    historico_compras: [
+      { data: '20/08/2025', valor: 99.90, qtd_itens: 1 },
+    ],
+  },
+  {
+    id: 9, nome: 'Roberto Alves', email: 'roberto@email.com', cidade: 'Guarulhos',
+    historico_compras: [
+      { data: '18/03/2026', valor: 479.80, qtd_itens: 3 },
+      { data: '02/02/2026', valor: 149.90, qtd_itens: 1 },
+      { data: '15/01/2026', valor: 239.90, qtd_itens: 2 },
+    ],
+  },
+  {
+    id: 10, nome: 'Camila Souza', email: 'camila@email.com', cidade: 'São Paulo',
+    historico_compras: [
+      { data: '27/03/2026', valor: 189.90, qtd_itens: 1 },
+      { data: '12/03/2026', valor: 299.80, qtd_itens: 2 },
+      { data: '25/02/2026', valor: 59.90,  qtd_itens: 1 },
+      { data: '10/02/2026', valor: 389.80, qtd_itens: 3 },
+      { data: '28/01/2026', valor: 149.90, qtd_itens: 1 },
+    ],
+  },
+]
+
 export const STATUS_ESTOQUE = {
   ok:  { label: 'Normal', color: '#00d9a8', bg: 'rgba(0,217,168,.12)'  },
   low: { label: 'Baixo',  color: '#f7c948', bg: 'rgba(247,201,72,.12)' },

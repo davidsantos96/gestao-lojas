@@ -24,5 +24,5 @@ export const NAV_ITEMS = [
   { key: 'vendas',     label: 'Vendas',      icon: 'ShoppingCart',  locked: true },
   { key: 'clientes',   label: 'Clientes',    icon: 'Users',         locked: true },
   { key: 'fiscal',     label: 'Fiscal',      icon: 'FileText',      locked: true },
-  { key: 'relatorios', label: 'Relatórios',  icon: 'BarChart2',     locked: true },
+  { key: 'relatorios', label: 'Relatórios',  icon: 'BarChart2' },
 ]

@@ -98,11 +98,11 @@ export const Table = styled.table`
     padding: 12px 16px;
     text-align: left;
     font-size: 11px;
-    color: ${props => props.theme.colors.muted};
+    color: ${props => props.theme.colors.muted2};
     font-family: monospace;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    font-weight: 500;
+    font-weight: 700;
   }
   
   td {

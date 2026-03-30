@@ -24,6 +24,8 @@ export const Aside = styled.aside`
     box-shadow: ${props => props.$isOpen ? '4px 0 24px rgba(0,0,0,0.5)' : 'none'};
     border-right: 1px solid ${props => props.theme.colors.border};
   }
+
+  @media print { display: none !important; }
 `
 
 export const BrandArea = styled.div`

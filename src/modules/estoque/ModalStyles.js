@@ -71,7 +71,8 @@ export const FormGridUnequal = styled.div`
 
 export const FormLabel = styled.label`
   font-size: 11px;
-  color: ${props => props.theme.colors.muted};
+  font-weight: 600;
+  color: ${props => props.theme.colors.muted2};
   font-family: monospace;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -203,7 +204,8 @@ export const MarginColumn = styled.div``;
 
 export const MarginLabel = styled.div`
   font-size: 10px;
-  color: ${props => props.theme.colors.muted};
+  font-weight: 600;
+  color: ${props => props.theme.colors.muted2};
   font-family: monospace;
   text-transform: uppercase;
   letter-spacing: 1px;

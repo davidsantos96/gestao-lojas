@@ -27,7 +27,7 @@ export const FilterTitleWrap = styled.div`
   span {
     font-size: 12px;
     font-weight: 600;
-    color: ${props => props.theme.colors.muted};
+    color: ${props => props.theme.colors.muted2};
   }
 `;
 
@@ -35,7 +35,8 @@ export const FilterGroup = styled.div``;
 
 export const FilterLabel = styled.label`
   font-size: 10px;
-  color: ${props => props.theme.colors.muted};
+  font-weight: 600;
+  color: ${props => props.theme.colors.muted2};
   font-family: monospace;
   letter-spacing: 1.5px;
   text-transform: uppercase;
@@ -180,10 +181,10 @@ export const RankingTh = styled.th`
   padding: 10px 14px;
   text-align: ${props => props.$align || 'left'};
   font-size: 10px;
-  color: ${props => props.theme.colors.muted};
+  color: ${props => props.theme.colors.muted2};
   font-family: monospace;
   letter-spacing: 1.5px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
 `;
 

@@ -66,6 +66,8 @@ export const SidebarOverlay = styled.div`
   @media (max-width: 767px) {
     display: block;
   }
+
+  @media print { display: none !important; }
 `
 
 export const MainArea = styled.main`
@@ -82,5 +84,14 @@ export const MainContent = styled.div`
   
   @media (max-width: 767px) {
     padding: 16px 12px;
+  }
+
+  @media print {
+    /* Escurece e dessatura todas as cores para impressão em papel branco.
+       Afeta styled-components, inline styles e SVGs (gráficos) de forma uniforme.
+       #00d9a8 → ~#3a9e85 | #ff5b6b → ~#a85050 | #4f8fff → ~#3d5fb0        */
+    filter: saturate(0.55) brightness(0.78);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 `

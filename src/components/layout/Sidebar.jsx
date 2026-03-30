@@ -17,7 +17,7 @@ const NAV_ITEMS = [
   { key: 'vendas',     label: 'Vendas',     icon: 'ShoppingCart'    },
   { key: 'clientes',   label: 'Clientes',   icon: 'Users'           },
   { key: 'fiscal',     label: 'Fiscal',     icon: 'FileText',       locked: true },
-  { key: 'relatorios', label: 'Relatórios', icon: 'BarChart2',      locked: true },
+  { key: 'relatorios', label: 'Relatórios', icon: 'BarChart2',      },
 ]
 
 export function Sidebar({ page, setPage, isOpen, onClose }) {

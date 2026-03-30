@@ -11,6 +11,8 @@ export const HeaderContainer = styled.header`
   top: 0;
   z-index: 10;
   gap: 12px;
+
+  @media print { display: none !important; }
 `;
 
 export const LeftGroup = styled.div`

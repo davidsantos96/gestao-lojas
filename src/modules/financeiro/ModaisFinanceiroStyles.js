@@ -107,7 +107,8 @@ export const Grid2 = styled.div`
 
 export const Label = styled.label`
   font-size: 11px;
-  color: ${props => props.theme.colors.muted};
+  font-weight: 600;
+  color: ${props => props.theme.colors.muted2};
   font-family: monospace;
   letter-spacing: 1px;
   text-transform: uppercase;

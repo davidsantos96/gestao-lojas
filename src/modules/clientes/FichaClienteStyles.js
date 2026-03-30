@@ -32,7 +32,8 @@ export const DataItem = styled.div`
   label {
     display: block;
     font-size: 11px;
-    color: ${props => props.theme.colors.muted};
+    font-weight: 600;
+    color: ${props => props.theme.colors.muted2};
     text-transform: uppercase;
     margin-bottom: 4px;
   }
