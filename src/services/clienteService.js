@@ -53,6 +53,16 @@ export const clienteService = {
     return res;
   },
 
+  // Análise RFM de clientes por período
+  // GET /clientes/rfm?inicio=YYYY-MM-DD&fim=YYYY-MM-DD
+  // → { data: [{ clienteId, nome, R, F, M, score_r, score_f, score_m, segmento, ultima_compra }], meta }
+  getRfm: async ({ inicio, fim } = {}) => {
+    const params = {}
+    if (inicio) params.inicio = inicio
+    if (fim)    params.fim    = fim
+    return api.get('/clientes/rfm', params)
+  },
+
   // Busca simples para vinculação (datalist/autocomplete)
   search: async (term) => {
     if (!term) return [];

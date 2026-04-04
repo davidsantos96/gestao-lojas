@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { ThemeContext } from '../../../contexts/ThemeContext'
 import { useCashflow, useContasPagar, useContasReceber } from '../../../hooks/useFinanceiro'
+import { useVisaoGeral } from '../../../hooks/useRelatorios'
 import { useProdutos } from '../../../hooks/useProdutos'
 import { KPI } from '../../../components/ui/KPI'
 import { SkeletonKPI } from '../../../components/ui/Skeleton'
@@ -60,6 +61,7 @@ export function VisaoGeral({ period }) {
   const { contas: contasPagarRaw,   loading: l2 }        = useContasPagar()
   const { contas: contasReceberRaw, loading: l3 }        = useContasReceber()
   const { produtos: produtosRaw,    loading: l4 }        = useProdutos()
+  const { data: visaoData,          loading: l5 }        = useVisaoGeral(period)
 
   const cashflow   = cashflowRaw?.length      ? cashflowRaw      : MOCK_CASHFLOW
   const cPagar     = contasPagarRaw?.length   ? contasPagarRaw   : MOCK_PAGAR
@@ -67,16 +69,16 @@ export function VisaoGeral({ period }) {
   const prods      = produtosRaw?.length      ? produtosRaw      : MOCK_PRODUTOS
 
   // Mostrar skeleton apenas na carga inicial (antes de qualquer dado disponível)
-  const initialLoad = (l1 || l4) && !cashflowRaw && !produtosRaw
+  const initialLoad = (l1 || l4 || l5) && !cashflowRaw && !produtosRaw && !visaoData
 
   // ── KPI derivados ─────────────────────────────────────────────────────────
   const kpi = useMemo(() => {
     const atual    = cashflow[cashflow.length - 1] ?? {}
     const anterior = cashflow[cashflow.length - 2] ?? {}
 
-    const receita     = atual.receitas  ?? 0
+    const receita     = visaoData?.kpis?.receita_total   ?? atual.receitas  ?? 0
     const prevReceita = anterior.receitas ?? 0
-    const margem      = atual.receitas ? (atual.lucro / atual.receitas) * 100 : 0
+    const margem      = visaoData?.kpis?.margem_percentual ?? (atual.receitas ? (atual.lucro / atual.receitas) * 100 : 0)
     const prevMargem  = anterior.receitas ? (anterior.lucro / anterior.receitas) * 100 : 0
 
     const valorEstoque = prods.reduce((s, p) => s + (p.estoque ?? 0) * (p.custo ?? 0), 0)
@@ -90,7 +92,7 @@ export function VisaoGeral({ period }) {
       valorEstoque,
       alertasCnt,
     }
-  }, [cashflow, prods])
+  }, [cashflow, prods, visaoData])
 
   // ── Dados do gráfico de tendência ─────────────────────────────────────────
   const chartData = useMemo(

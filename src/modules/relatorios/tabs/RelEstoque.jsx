@@ -4,11 +4,12 @@ import {
   CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import {
-  Boxes, PackageX, AlertTriangle, BarChart2,
+  Boxes, PackageX, AlertTriangle, BarChart2, Info,
 } from 'lucide-react'
 import { ThemeContext }  from '../../../contexts/ThemeContext'
 import { useProdutos }   from '../../../hooks/useProdutos'
 import { useMovimentos } from '../../../hooks/useMovimentos'
+import { useAbc }        from '../../../hooks/useRelatorios'
 import { KPI }           from '../../../components/ui/KPI'
 import { SkeletonKPI }   from '../../../components/ui/Skeleton'
 import { Card }          from '../../../components/ui/Card'
@@ -139,6 +140,7 @@ export function RelEstoque({ period }) {
 
   const { produtos: prodsRaw, loading: lp } = useProdutos()
   const { movimentos: movsRaw, loading: lm } = useMovimentos()
+  const { dados: abcApiData, meta: abcMeta, loading: abcLoading } = useAbc(period)
 
   const prods = prodsRaw?.length ? prodsRaw : MOCK_PRODS
   const movs  = movsRaw?.length  ? movsRaw  : MOCK_MOVS
@@ -146,7 +148,6 @@ export function RelEstoque({ period }) {
   const initialLoad = (lp || lm) && !prodsRaw?.length
 
   // ── Dados derivados ───────────────────────────────────────────────────────
-  const abcData    = useMemo(() => calcABC(prods),              [prods])
   const deadStock  = useMemo(() => calcDeadStock(prods, movs),  [prods, movs])
   const movPorMes  = useMemo(() => calcMovPorMes(movs),         [movs])
   const giroCat    = useMemo(() => calcGiroCat(prods, movs),    [prods, movs])
@@ -154,8 +155,8 @@ export function RelEstoque({ period }) {
 
   // ── KPIs ──────────────────────────────────────────────────────────────────
   const totalValor  = useMemo(() => prods.reduce((s, p) => s + (p.estoque ?? 0) * (p.custo ?? 0), 0), [prods])
-  const countA      = abcData.filter(p => p.cls === 'A').length
-  const valorA      = abcData.filter(p => p.cls === 'A').reduce((s, p) => s + p.valorEstoque, 0)
+  const countA      = abcApiData.filter(p => p.classe === 'A').length
+  const valorA      = abcApiData.filter(p => p.classe === 'A').reduce((s, p) => s + p.receita, 0)
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -266,50 +267,70 @@ export function RelEstoque({ period }) {
       <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 16 }}>
         <div style={{ padding: '20px 20px 0' }}>
           <SectionTitle>
-            Curva ABC — por Valor em Estoque
-            <SubLabel>A = top 80% · B = 80–95% · C = acima de 95%</SubLabel>
+            Curva ABC — por Receita de Vendas
+            <SubLabel>A = top 80% · B = 80–95% · C = acima de 95% · base: receita no período</SubLabel>
           </SectionTitle>
         </div>
-        <TableWrap>
-          <Table>
-            <thead>
-              <tr>
-                <Th style={{ width: 48 }}>Classe</Th>
-                <Th>Produto</Th>
-                <Th>Categoria</Th>
-                <Th $right>Estoque</Th>
-                <Th $right>Valor (custo)</Th>
-                <Th $right>% Acumulado</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {abcData.map(p => (
-                <Tr key={p.id}>
-                  <Td>
-                    <Tag color={ABC_CONFIG[p.cls].color} bg={ABC_CONFIG[p.cls].bg}>
-                      {p.cls}
-                    </Tag>
-                  </Td>
-                  <Td>
-                    <ProductName>{p.nome}</ProductName>
-                    <ProductSku>{p.sku}</ProductSku>
-                  </Td>
-                  <Td style={{ color: theme.colors.muted }}>{p.categoria}</Td>
-                  <Td $right>{p.estoque} un</Td>
-                  <Td $right style={{ fontWeight: 700 }}>{fmtBRL(p.valorEstoque)}</Td>
-                  <Td $right>
-                    <AbcBar>
-                      {p.pctAcum.toFixed(1)}%
-                      <AbcTrack>
-                        <AbcFill $pct={Math.min(p.sharePct * 3, 100)} $class={p.cls} />
-                      </AbcTrack>
-                    </AbcBar>
-                  </Td>
-                </Tr>
-              ))}
-            </tbody>
-          </Table>
-        </TableWrap>
+        {abcMeta?.periodo_real_inicio && period?.inicio && abcMeta.periodo_real_inicio > period.inicio && (
+          <div style={{ padding: '0 20px 12px' }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 6,
+              background: 'rgba(247,201,72,.1)', border: '1px solid rgba(247,201,72,.25)',
+              fontSize: 12, color: '#f7c948',
+            }}>
+              <Info size={13} />
+              Dados disponíveis a partir de <strong style={{ marginLeft: 4 }}>{abcMeta.periodo_real_inicio}</strong>.
+            </div>
+          </div>
+        )}
+        {!abcLoading && abcApiData.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '48px 24px', color: theme.colors.muted }}>
+            <BarChart2 size={36} style={{ marginBottom: 12, opacity: 0.3 }} />
+            <div style={{ fontSize: 14, fontWeight: 600, color: theme.colors.text, marginBottom: 6 }}>
+              Nenhum produto com vendas no período
+            </div>
+            <div style={{ fontSize: 12 }}>Amplie o intervalo de datas ou verifique se há vendas concluídas.</div>
+          </div>
+        ) : (
+          <TableWrap>
+            <Table>
+              <thead>
+                <tr>
+                  <Th style={{ width: 48 }}>Classe</Th>
+                  <Th>Produto</Th>
+                  <Th $right>Receita</Th>
+                  <Th $right>% Receita</Th>
+                  <Th $right>% Acumulado</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {abcApiData.map(p => (
+                  <Tr key={p.produtoId}>
+                    <Td>
+                      <Tag color={ABC_CONFIG[p.classe].color} bg={ABC_CONFIG[p.classe].bg}>
+                        {p.classe}
+                      </Tag>
+                    </Td>
+                    <Td>
+                      <ProductName>{p.nome}</ProductName>
+                      <ProductSku>{p.sku}</ProductSku>
+                    </Td>
+                    <Td $right style={{ fontWeight: 700 }}>{fmtBRL(p.receita)}</Td>
+                    <Td $right>
+                      <AbcBar>
+                        {(p.percentual ?? 0).toFixed(1)}%
+                        <AbcTrack>
+                          <AbcFill $pct={Math.min((p.percentual ?? 0) * 3, 100)} $class={p.classe} />
+                        </AbcTrack>
+                      </AbcBar>
+                    </Td>
+                    <Td $right>{(p.acumulado ?? 0).toFixed(1)}%</Td>
+                  </Tr>
+                ))}
+              </tbody>
+            </Table>
+          </TableWrap>
+        )}
       </Card>
 
       {/* Estoque com ruptura */}

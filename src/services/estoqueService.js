@@ -72,3 +72,12 @@ export function createMovimento(data) {
 export function getResumoEstoque() {
   return api.get('/estoque/resumo')
 }
+
+/**
+ * Classificação ABC por receita de vendas no período
+ * GET /estoque/abc?inicio=YYYY-MM-DD&fim=YYYY-MM-DD
+ * → { data: [{ produtoId, sku, nome, receita, percentual, acumulado, classe }], meta }
+ */
+export function getAbc(params = {}) {
+  return api.get('/estoque/abc', params)
+}

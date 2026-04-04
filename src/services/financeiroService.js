@@ -12,10 +12,19 @@ export function getResumoFinanceiro(params = {}) {
 // ─── Fluxo de Caixa ───────────────────────────────────────────────────────────
 /**
  * GET /financeiro/cashflow?meses=7
- * → [{ mes, receitas, despesas, lucro }]
+ * → { historico: [{ mes, receitas, despesas, lucro }], projecao: [{ mes, receitas_previstas, despesas_previstas }] }
  */
 export function getCashflow(params = {}) {
   return api.get('/financeiro/cashflow', params)
+}
+
+/**
+ * KPIs consolidados do período para a Visão Geral de Relatórios
+ * GET /relatorios/visao-geral?inicio=YYYY-MM-DD&fim=YYYY-MM-DD
+ * → { kpis, alertas, meta }
+ */
+export function getVisaoGeral(params = {}) {
+  return api.get('/relatorios/visao-geral', params)
 }
 
 // ─── Contas a Pagar ───────────────────────────────────────────────────────────

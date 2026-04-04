@@ -1,10 +1,10 @@
 import { useContext, useMemo, useState } from 'react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
-import { Users, Award, TrendingDown, AlertTriangle } from 'lucide-react'
+import { Users, Award, TrendingDown, AlertTriangle, Info } from 'lucide-react'
 import { KPI } from '../../../components/ui/KPI'
 import { Tag } from '../../../components/ui/Tag'
 import { ThemeContext } from '../../../contexts/ThemeContext'
-import { clientes } from '../../../data/mock'
+import { useRfm } from '../../../hooks/useRelatorios'
 import { fmtBRL } from '../../../utils/format'
 import {
   KpiGrid, ContentGrid, ChartCard, CardTitle, TableCard,
@@ -12,61 +12,24 @@ import {
   DonutCenter, Legend, LegendItem, LegendDot,
 } from './RelClientesStyles'
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
-function parseDate(str) {
-  if (!str) return null
-  const [d, m, y] = str.split('/')
-  return new Date(+y, +m - 1, +d)
-}
-
-const HOJE = new Date(2026, 2, 30) // data de referência fixa para o mock
-
-// ─── RFM: score 1-5 baseado nos percentis da coleção ───────────────────────
-function calcRFM(lista) {
-  const enriched = lista.map(c => {
-    const compras = c.historico_compras || []
-    const datas   = compras.map(h => parseDate(h.data)).filter(Boolean).sort((a, b) => b - a)
-    const ultima  = datas[0] || null
-    const recency = ultima ? Math.floor((HOJE - ultima) / 86400000) : 9999
-    const freq    = compras.length
-    const monetary = compras.reduce((s, h) => s + h.valor, 0)
-    return { ...c, recency, freq, monetary }
-  })
-
-  const sorted_r = [...enriched].sort((a, b) => a.recency - b.recency)
-  const sorted_f = [...enriched].sort((a, b) => b.freq    - a.freq)
-  const sorted_m = [...enriched].sort((a, b) => b.monetary - a.monetary)
-  const rank = (arr, id) => arr.findIndex(x => x.id === id)
-  const n = enriched.length
-
-  return enriched.map(c => {
-    const rScore = 5 - Math.floor(rank(sorted_r, c.id) / n * 5)
-    const fScore = 5 - Math.floor(rank(sorted_f, c.id) / n * 5)
-    const mScore = 5 - Math.floor(rank(sorted_m, c.id) / n * 5)
-    const avg = (rScore + fScore + mScore) / 3
-
-    let segment
-    if (rScore >= 4 && fScore >= 4 && mScore >= 4) segment = 'Champion'
-    else if (fScore >= 3 && mScore >= 3)            segment = 'Leal'
-    else if (rScore >= 3)                            segment = 'Potencial'
-    else if (rScore <= 2 && fScore >= 2)             segment = 'Em risco'
-    else                                            segment = 'Perdido'
-
-    return { ...c, rScore, fScore, mScore, rfmAvg: avg, segment }
-  })
-}
-
 // ─── Tag config por segmento ───────────────────────────────────────────────
 const SEG_CONFIG = {
-  Champion:  { color: '#00d9a8', bg: 'rgba(0,217,168,.12)' },
-  Leal:      { color: '#4f8fff', bg: 'rgba(79,143,255,.12)' },
-  Potencial: { color: '#a78bfa', bg: 'rgba(167,139,250,.12)' },
-  'Em risco':{ color: '#f7c948', bg: 'rgba(247,201,72,.12)' },
-  Perdido:   { color: '#ff5b6b', bg: 'rgba(255,91,107,.12)' },
+  // nomes da API (português)
+  'Campeão':  { color: '#00d9a8', bg: 'rgba(0,217,168,.12)' },
+  'Leal':     { color: '#4f8fff', bg: 'rgba(79,143,255,.12)' },
+  'Em Risco': { color: '#f7c948', bg: 'rgba(247,201,72,.12)' },
+  'Dormente': { color: '#ff5b6b', bg: 'rgba(255,91,107,.12)' },
+  'Novo':     { color: '#a78bfa', bg: 'rgba(167,139,250,.12)' },
+  'Regular':  { color: '#6b738f', bg: 'rgba(107,115,143,.12)' },
+  // aliases legados (mock local — mantidos para não quebrar se houver dados residuais)
+  'Champion':  { color: '#00d9a8', bg: 'rgba(0,217,168,.12)' },
+  'Potencial': { color: '#a78bfa', bg: 'rgba(167,139,250,.12)' },
+  'Em risco':  { color: '#f7c948', bg: 'rgba(247,201,72,.12)' },
+  'Perdido':   { color: '#ff5b6b', bg: 'rgba(255,91,107,.12)' },
 }
 
-const SEG_DONUT_COLORS = ['#00d9a8', '#4f8fff', '#a78bfa', '#f7c948', '#ff5b6b']
-const SEG_ORDER = ['Champion', 'Leal', 'Potencial', 'Em risco', 'Perdido']
+const SEG_DONUT_COLORS = ['#00d9a8', '#4f8fff', '#a78bfa', '#f7c948', '#ff5b6b', '#6b738f']
+const SEG_ORDER = ['Campeão', 'Leal', 'Novo', 'Em Risco', 'Dormente', 'Regular']
 
 // ─── Tooltip customizado ───────────────────────────────────────────────────
 function CustomTooltip({ active, payload }) {
@@ -88,7 +51,20 @@ export function RelClientes({ period }) {
   const [sortKey, setSortKey]   = useState('monetary')
   const [sortDir, setSortDir]   = useState('desc')
 
-  const dados = useMemo(() => calcRFM(clientes), [])
+  const { dados: rawDados, meta, loading } = useRfm(period)
+
+  // Normaliza campos da API para o shape usado pelo componente
+  const dados = useMemo(() => rawDados.map(c => ({
+    ...c,
+    id:       c.clienteId,
+    rScore:   c.score_r,
+    fScore:   c.score_f,
+    mScore:   c.score_m,
+    segment:  c.segmento,
+    recency:  c.R,   // dias desde a última compra
+    freq:     c.F,   // número de pedidos
+    monetary: c.M,   // valor total gasto
+  })), [rawDados])
 
   const sorted = useMemo(() => {
     return [...dados].sort((a, b) => {
@@ -108,8 +84,8 @@ export function RelClientes({ period }) {
   const maxLtv = useMemo(() => Math.max(...dados.map(c => c.monetary)), [dados])
 
   const kpis = useMemo(() => {
-    const champions = dados.filter(c => c.segment === 'Champion').length
-    const atRisk    = dados.filter(c => c.segment === 'Em risco' || c.segment === 'Perdido').length
+    const champions = dados.filter(c => c.segment === 'Campeão').length
+    const atRisk    = dados.filter(c => c.segment === 'Em Risco' || c.segment === 'Dormente').length
     const ltvMedio  = dados.reduce((s, c) => s + c.monetary, 0) / dados.length
     return { total: dados.length, champions, atRisk, ltvMedio }
   }, [dados])
@@ -124,9 +100,38 @@ export function RelClientes({ period }) {
       {sortDir === 'desc' || sortKey !== key ? '↓' : '↑'}
     </SortArrow>
   )
+  // ── Aviso de período parcial ────────────────────────────────────────────
+  const periodoParcial = meta && period?.inicio && meta.periodo_real_inicio &&
+    meta.periodo_real_inicio > period.inicio
 
+  // ── EmptyState ───────────────────────────────────────────────────────────
+  if (!loading && dados.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: '64px 24px', color: theme.colors.muted }}>
+        <Users size={48} style={{ marginBottom: 16, opacity: 0.3 }} />
+        <div style={{ fontSize: 16, fontWeight: 600, color: theme.colors.text, marginBottom: 8 }}>
+          Nenhum cliente com compras neste período
+        </div>
+        <div style={{ fontSize: 13 }}>
+          Tente ampliar o intervalo de datas ou verifique se há vendas concluídas no período selecionado.
+        </div>
+      </div>
+    )
+  }
   return (
     <>
+      {periodoParcial && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '10px 14px', marginBottom: 16, borderRadius: 8,
+          background: 'rgba(247,201,72,.1)', border: '1px solid rgba(247,201,72,.25)',
+          fontSize: 13, color: '#f7c948',
+        }}>
+          <Info size={14} />
+          Dados disponíveis a partir de <strong style={{ marginLeft: 4 }}>{meta.periodo_real_inicio}</strong>.
+          O período solicitado não possui registros antes dessa data.
+        </div>
+      )}
       <KpiGrid>
         <KPI label="Total Clientes" value={kpis.total}
           sub="base ativa" color={theme.colors.accent} icon={Users} />

@@ -10,6 +10,9 @@ const TTL_MAP = {
   '/vendas':               30_000,
   '/financeiro/lancamentos': 30_000,
   '/financeiro/categorias':  300_000, // 5 min (raramente muda)
+  '/relatorios/visao-geral': 120_000, // 2 min
+  '/clientes/rfm':           120_000, // 2 min
+  '/estoque/abc':            120_000, // 2 min
 }
 
 const _cache = new Map()

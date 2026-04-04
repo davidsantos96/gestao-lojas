@@ -50,11 +50,17 @@ function contasPagarVence7d() {
 // ─── Cashflow ─────────────────────────────────────────────────────────────────
 export function useCashflow(meses = 7) {
   const fetchFn = useCallback(() => {
-    if (USE_MOCK) return Promise.resolve(MOCK_CASHFLOW)
+    if (USE_MOCK) return Promise.resolve({ historico: MOCK_CASHFLOW, projecao: [] })
     return getCashflow({ meses })
   }, [meses])
 
-  return useAsync(fetchFn)
+  const { data: response, loading, error, execute: refetch } = useAsync(fetchFn)
+
+  // API agora retorna { historico, projecao } — extrai ambos e garante retrocompat
+  const historico = response?.historico ?? (Array.isArray(response) ? response : null)
+  const projecao  = response?.projecao  ?? []
+
+  return { data: historico, projecao, loading, error, refetch }
 }
 
 // ─── Contas a Pagar ───────────────────────────────────────────────────────────
