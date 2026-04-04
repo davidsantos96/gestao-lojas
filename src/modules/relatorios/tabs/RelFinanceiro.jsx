@@ -7,6 +7,7 @@ import {
 import { TrendingUp, TrendingDown, AlertCircle, DollarSign } from 'lucide-react'
 import { KPI } from '../../../components/ui/KPI'
 import { ThemeContext } from '../../../contexts/ThemeContext'
+import { useCashflow, useContasPagar, useContasReceber, useDRE } from '../../../hooks/useFinanceiro'
 import {
   cashflowData  as MOCK_CASHFLOW,
   contasPagar   as MOCK_PAGAR,
@@ -82,20 +83,30 @@ function buildDespesasPie(pagar) {
 export function RelFinanceiro({ period }) {
   const { theme } = useContext(ThemeContext)
 
-  const cashflow    = MOCK_CASHFLOW
-  const pagar       = MOCK_PAGAR
-  const receber     = MOCK_RECEBER
-  const dre         = MOCK_DRE
+  // Deriva o mês para o DRE a partir do período selecionado (YYYY-MM)
+  const mes = period?.inicio ? period.inicio.slice(0, 7) : undefined
+
+  const { data: cashflowRaw }    = useCashflow(7)
+  const { contas: pagarRaw }     = useContasPagar()
+  const { contas: receberRaw }   = useContasReceber()
+  const { data: dreResponse }    = useDRE(mes)
+
+  const cashflow = cashflowRaw?.length          ? cashflowRaw             : MOCK_CASHFLOW
+  const pagar    = pagarRaw?.length             ? pagarRaw                : MOCK_PAGAR
+  const receber  = receberRaw?.length           ? receberRaw              : MOCK_RECEBER
+  const dre      = dreResponse?.linhas?.length  ? dreResponse.linhas      : MOCK_DRE
 
   const projection  = useMemo(() => buildProjection(cashflow), [cashflow])
   const despesasPie = useMemo(() => buildDespesasPie(pagar), [pagar])
 
   // KPIs a partir do último mês
-  const ultimo = cashflow[cashflow.length - 1]
-  const penult = cashflow[cashflow.length - 2]
-  const margemBruta   = ultimo.lucro / ultimo.receitas
-  const margemAnterior = penult.lucro / penult.receitas
-  const deltaMargem   = margemBruta - margemAnterior
+  const ultimo = cashflow[cashflow.length - 1] ?? {}
+  const penult = cashflow[cashflow.length - 2] ?? {}
+  const margemBruta    = dreResponse?.margem_bruta    != null
+    ? dreResponse.margem_bruta / 100
+    : (ultimo.receitas ? ultimo.lucro / ultimo.receitas : 0)
+  const margemAnterior = penult.receitas ? penult.lucro / penult.receitas : 0
+  const deltaMargem    = margemBruta - margemAnterior
 
   // Inadimplência
   const totalPagar    = pagar.reduce((s, c) => s + c.valor, 0)

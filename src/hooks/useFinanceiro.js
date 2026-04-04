@@ -118,7 +118,7 @@ export function useContasReceber() {
 }
 
 // ─── DRE ──────────────────────────────────────────────────────────────────────
-export function useDRE() {
+export function useDRE(mes) {
   const fetchFn = useCallback(() => {
     if (USE_MOCK) return Promise.resolve({
       linhas:            MOCK_DRE,
@@ -127,8 +127,8 @@ export function useDRE() {
       ticket_medio:      187,
       total_transacoes:  283,
     })
-    return getDRE()
-  }, [])
+    return getDRE(mes ? { mes } : {})
+  }, [mes])
 
   return useAsync(fetchFn)
 }
