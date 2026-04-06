@@ -1,7 +1,8 @@
 import { C } from '../../constants/theme'
 import { Card } from './Card'
 
-export function KPI({ label, value, sub, color, icon: Icon }) {
+export function KPI({ label, value, sub, sub2, color, icon: Icon }) {
+  const hasValue = value !== null && value !== undefined
   return (
     <Card style={{ padding: '20px 22px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
       <div>
@@ -11,11 +12,16 @@ export function KPI({ label, value, sub, color, icon: Icon }) {
         }}>
           {label}
         </div>
-        <div style={{ fontSize: 26, fontWeight: 700, color: color || C.text, letterSpacing: -1 }}>
-          {value}
-        </div>
+        {hasValue && (
+          <div style={{ fontSize: 26, fontWeight: 700, color: color || C.text, letterSpacing: -1 }}>
+            {value}
+          </div>
+        )}
         {sub && (
-          <div style={{ fontSize: 12, color: C.muted2, marginTop: 4 }}>{sub}</div>
+          <div style={{ fontSize: hasValue ? 12 : 16, fontWeight: hasValue ? 400 : 600, color: hasValue ? C.muted2 : (color || C.text), marginTop: hasValue ? 4 : 0 }}>{sub}</div>
+        )}
+        {sub2 && (
+          <div style={{ fontSize: hasValue ? 12 : 16, fontWeight: hasValue ? 400 : 600, color: hasValue ? C.muted2 : (color || C.text), marginTop: 4 }}>{sub2}</div>
         )}
       </div>
       <div style={{

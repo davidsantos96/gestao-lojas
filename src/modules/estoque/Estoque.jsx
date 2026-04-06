@@ -119,7 +119,7 @@ export function Estoque() {
           : <>
               <KPI label="Total Códigos"    value={produtosFiltrados.length}  sub={`de ${resumo.totalSkus} cadastrados`}  color={theme.colors.blue}   icon={Package}       />
               <KPI label="Unidades"      value={resumo.totalUnidades}       sub="em estoque"       color={theme.colors.accent} icon={Boxes}         />
-              <KPI label="Valor Estoque" value={fmtBRL(resumo.valorTotal)} sub="pelo custo"       color={theme.colors.yellow} icon={DollarSign}    />
+              <KPI label="Valor Estoque" value={null} sub={`Custo: ${fmtBRL(resumo.valorTotal)}`} sub2={`Venda: ${fmtBRL(resumo.valorTotalVenda)}`} color={theme.colors.yellow} icon={DollarSign} />
               <KPI label="Alertas"       value={resumo.alertas}             sub="precisam atenção" color={theme.colors.red}    icon={AlertTriangle} />
             </>
         }

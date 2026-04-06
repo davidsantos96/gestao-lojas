@@ -133,6 +133,25 @@ export const Input = styled.input`
   }
 `
 
+export const Textarea = styled.textarea`
+  width: 100%;
+  padding: 10px 12px;
+  background: ${props => props.theme.colors.s2};
+  border: 1px solid ${props => props.theme.colors.border};
+  border-radius: 8px;
+  color: ${props => props.theme.colors.text};
+  font-size: 13px;
+  outline: none;
+  resize: vertical;
+  min-height: 72px;
+  font-family: inherit;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`
+
 export const Select = styled.select`
   width: 100%;
   padding: 10px 12px;

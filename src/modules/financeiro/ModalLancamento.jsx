@@ -2,13 +2,13 @@ import { useState } from 'react'
 import { X, Loader2 } from 'lucide-react'
 import {
   Overlay, ModalContainer, CloseBtn, ModalModule, ModalTitle, FormWrap, TypeToggleWrap, TypeToggleBtn,
-  FieldWrap, Grid2, Label, Input, Select, ErrorBox, ActionsWrap, CancelBtn, SubmitBtn
+  FieldWrap, Grid2, Label, Input, Select, Textarea, ErrorBox, ActionsWrap, CancelBtn, SubmitBtn
 } from './ModaisFinanceiroStyles'
 
 const CATEGORIAS_DESPESA = ['Fornecedor', 'Aluguel', 'Utilities', 'RH', 'Marketing', 'Outro']
 const CATEGORIAS_RECEITA = ['Venda Balcão', 'Venda Online', 'Atacado', 'Outro']
 
-const INITIAL = { tipo: 'despesa', descricao: '', valor: '', data: '', categoria: '' }
+const INITIAL = { tipo: 'despesa', descricao: '', valor: '', data: '', categoria: '', num_documento: '', parcelas: 1, observacao: '' }
 
 export function ModalLancamento({ lancamento, onClose, onSubmit }) {
   const isEdit = !!lancamento
@@ -27,11 +27,14 @@ export function ModalLancamento({ lancamento, onClose, onSubmit }) {
     }
 
     return {
-      tipo:      (lancamento.tipo ?? 'DESPESA').toLowerCase(),
-      descricao: lancamento.descricao ?? '',
-      valor:     lancamento.valor ?? '',
-      data:      formattedDate,
-      categoria: lancamento.categoria ?? '',
+      tipo:          (lancamento.tipo ?? 'DESPESA').toLowerCase(),
+      descricao:     lancamento.descricao ?? '',
+      valor:         lancamento.valor ?? '',
+      data:          formattedDate,
+      categoria:     lancamento.categoria ?? '',
+      num_documento: lancamento.num_documento ?? '',
+      parcelas:      lancamento.parcelas ?? 1,
+      observacao:    lancamento.observacao ?? '',
     }
   })
   const [loading, setLoading] = useState(false)
@@ -46,7 +49,7 @@ export function ModalLancamento({ lancamento, onClose, onSubmit }) {
 
   // Ao trocar tipo limpa campos que não se aplicam
   const handleTipo = (tipo) => {
-    setForm(f => ({ ...f, tipo, data: tipo === 'receita' ? hoje : '', categoria: '' }))
+    setForm(f => ({ ...f, tipo, data: tipo === 'receita' ? hoje : '', categoria: '', num_documento: '', parcelas: 1, observacao: '' }))
     setError(null)
   }
 
@@ -63,11 +66,16 @@ export function ModalLancamento({ lancamento, onClose, onSubmit }) {
     setError(null)
     try {
       const payload = {
-        tipo:      form.tipo.toUpperCase(),
-        descricao: form.descricao,
-        valor:     parseFloat(form.valor),
-        data:      form.data,
-        categoria_id: form.categoria || undefined,
+        tipo:          form.tipo.toUpperCase(),
+        descricao:     form.descricao,
+        valor:         parseFloat(form.valor),
+        data:          form.data,
+        categoria_id:  form.categoria || undefined,
+        ...(form.tipo === 'despesa' && {
+          num_documento: form.num_documento || undefined,
+          parcelas:      parseInt(form.parcelas, 10) || 1,
+          observacao:    form.observacao || undefined,
+        }),
       }
       await onSubmit?.(payload)
       onClose()
@@ -147,6 +155,41 @@ export function ModalLancamento({ lancamento, onClose, onSubmit }) {
               {categorias.map(c => <option key={c} value={c}>{c}</option>)}
             </Select>
           </FieldWrap>
+
+          {/* Campos exclusivos de despesa */}
+          {!isReceita && (
+            <>
+              <Grid2>
+                <FieldWrap>
+                  <Label>Nº Documento</Label>
+                  <Input
+                    value={form.num_documento}
+                    onChange={e => set('num_documento', e.target.value)}
+                    disabled={loading}
+                    placeholder="Ex: NF-0042, Bol-123"
+                  />
+                </FieldWrap>
+                <FieldWrap>
+                  <Label>Parcelas</Label>
+                  <Input
+                    type="number" min="1" max="60" step="1"
+                    value={form.parcelas}
+                    onChange={e => set('parcelas', e.target.value)}
+                    disabled={loading}
+                  />
+                </FieldWrap>
+              </Grid2>
+              <FieldWrap>
+                <Label>Observação</Label>
+                <Textarea
+                  value={form.observacao}
+                  onChange={e => set('observacao', e.target.value)}
+                  disabled={loading}
+                  placeholder="Informações adicionais sobre este lançamento..."
+                />
+              </FieldWrap>
+            </>
+          )}
 
           {/* Data de recebimento para receita */}
           {isReceita && (

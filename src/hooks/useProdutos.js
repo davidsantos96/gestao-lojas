@@ -49,10 +49,11 @@ export function useProdutos() {
   }, [produtos, busca, filtroStatus])
 
   const resumo = useMemo(() => ({
-    totalSkus:     response?.total ?? produtos.length,
-    totalUnidades: produtos.reduce((a, p) => a + (p.estoque ?? 0), 0),
-    valorTotal:    produtos.reduce((a, p) => a + (p.estoque ?? 0) * (p.custo ?? 0), 0),
-    alertas:       produtos.filter(p => p.status !== 'ok').length,
+    totalSkus:        response?.total ?? produtos.length,
+    totalUnidades:    produtos.reduce((a, p) => a + (p.estoque ?? 0), 0),
+    valorTotal:       produtos.reduce((a, p) => a + (p.estoque ?? 0) * (p.custo ?? 0), 0),
+    valorTotalVenda:  produtos.reduce((a, p) => a + (p.estoque ?? 0) * (p.preco ?? 0), 0),
+    alertas:          produtos.filter(p => p.status !== 'ok').length,
   }), [produtos])
 
   const adicionarProduto = useCallback(async (data) => {

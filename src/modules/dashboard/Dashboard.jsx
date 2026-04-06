@@ -55,7 +55,7 @@ export function Dashboard({ setPage }) {
           : <>
             <KPI label="Receita Mar" value={fmtBRL(resumoFin?.receita || 0)} sub="↑ 15% vs fev" color={theme.colors.accent} icon={TrendingUp} />
             <KPI label="Despesas Mar" value={fmtBRL(resumoFin?.despesas || 0)} sub="↓ 3% vs fev" color={theme.colors.blue} icon={TrendingDown} />
-            <KPI label="Val. Estoque" value={fmtBRL(resumo.valorTotal)} sub={`${resumo.totalSkus} produtos`} color={theme.colors.yellow} icon={Boxes} />
+            <KPI label="Val. Estoque" value={fmtBRL(resumo.valorTotalVenda)} sub={`${resumo.totalSkus} produtos · a preço de venda`} color={theme.colors.yellow} icon={Boxes} />
             <KPI label="Alertas" value={resumo.alertas + contasPagar.filter(c => c.status === 'vencido').length}
               sub="estoque + financeiro" color={theme.colors.red} icon={AlertTriangle} />
           </>
