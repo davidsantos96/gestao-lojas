@@ -29,7 +29,7 @@ export function Lancamentos({ titulo, lancamentos = [], total = 0, loading, erro
     }
   }
 
-  if (loading) return <SectionWrap>{titulo && <SectionHeader>{titulo}</SectionHeader>}<Card><SkeletonTable rows={4} cols={5} /></Card></SectionWrap>
+  if (loading) return <SectionWrap>{titulo && <SectionHeader>{titulo}</SectionHeader>}<Card><SkeletonTable rows={4} cols={6} /></Card></SectionWrap>
   if (error)   return <SectionWrap>{titulo && <SectionHeader>{titulo}</SectionHeader>}<Card><ErrorState error={error} onRetry={onRefetch} /></Card></SectionWrap>
   if (!lancamentos.length) return null
 
@@ -46,8 +46,8 @@ export function Lancamentos({ titulo, lancamentos = [], total = 0, loading, erro
           <StyledTable>
             <thead>
               <tr>
-                {['Data', 'Tipo', 'Descrição', 'Valor', ''].map((h, i) => (
-                  <Th key={i} style={{ textAlign: i === 3 ? 'right' : 'left' }}>
+                {['Data', 'Tipo', 'Descrição', 'Parcelas', 'Valor', ''].map((h, i) => (
+                  <Th key={i} style={{ textAlign: i === 4 ? 'right' : 'left' }}>
                     {h}
                   </Th>
                 ))}
@@ -66,6 +66,9 @@ export function Lancamentos({ titulo, lancamentos = [], total = 0, loading, erro
                       <Tag color={cfg.color} bg={cfg.bg}>{cfg.label}</Tag>
                     </Td>
                     <Td $fontSize="13px" $weight={600} $color={theme.colors.text}>{l.descricao}</Td>
+                    <Td $fontSize="12px" $color={theme.colors.muted} $mono style={{ textAlign: 'center' }}>
+                      {l.tipo === 'DESPESA' && l.parcelas && l.parcelas > 1 ? `${l.parcelas}x` : '—'}
+                    </Td>
                     <Td $fontSize="14px" $weight={700} $color={cfg.color} $mono style={{ textAlign: 'right' }}>
                       {l.tipo === 'DESPESA' ? '−' : '+'}{fmtBRL(l.valor)}
                     </Td>
