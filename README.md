@@ -10,10 +10,11 @@ Frontend do sistema de gestão para lojas, construído com **React 18 + Vite 5**
 |---|---|---|
 | React | 18 | UI principal |
 | Vite | 5 | Bundler / dev server |
+| Styled Components | 6 | CSS-in-JS |
 | Recharts | 2 | Gráficos e dashboards |
 | Lucide React | 0.383 | Ícones |
 
-**Backend:** `gestao-lojas-api` (NestJS + Prisma + PostgreSQL via Supabase)
+**Backend:** `gestao-lojas-api` (NestJS + PostgreSQL via Supabase)
 
 ---
 
@@ -36,9 +37,6 @@ VITE_EMPRESA_ID=empresa-demo
 ```bash
 cd ../gestao-lojas-api
 npm install
-npm run db:generate   # gera o Prisma Client
-npm run db:migrate    # aplica migrations
-npm run db:seed       # popula dados iniciais (opcional)
 npm run start:dev     # inicia em modo watch na porta 3000
 ```
 
@@ -55,71 +53,61 @@ npm run dev           # http://localhost:5173
 
 ```
 src/
+├── contexts/
+│   └── ThemeContext.jsx        # Gerenciamento de tema (Light/Dark)
+│
+├── styles/
+│   ├── global.js               # Estilos globais (Reset + Tokens CSS)
+│   └── themes/                 # Definições de cores para light/dark mode
+│
 ├── constants/
-│   └── theme.js                # Paleta de cores e constantes visuais (C.*)
+│   └── theme.js                # Paleta de cores legado / constantes (C.*)
 │
 ├── data/
 │   └── mock.js                 # Dados fallback para dev offline
 │
 ├── utils/
-│   └── format.js               # fmtBRL, fmtPct, fmtK
+│   └── format.js               # fmtBRL, fmtPct, fmtK, dates
 │
 ├── services/                   # Camada de comunicação com a API
-│   ├── api.js                  # Cliente HTTP base (fetch + timeout + auth)
+│   ├── api.js                  # Cliente HTTP base (axios/fetch wrapper)
 │   ├── authService.js          # login, logout, getMe
 │   ├── financeiroService.js    # resumo, cashflow, contas, lançamentos, DRE
 │   ├── vendasService.js        # getVendas
-│   └── ...
+│   ├── clienteService.js       # CRUD de clientes
+│   └── estoqueService.js       # CRUD de produtos e movimentações
 │
 ├── hooks/                      # Custom hooks de estado e lógica
 │   ├── useAsync.js             # Hook genérico de chamadas assíncronas
-│   ├── useAuth.jsx             # Autenticação + logout automático por inatividade
-│   ├── useIdleTimer.js         # Timer de inatividade (5 min → alerta 30s antes)
-│   ├── useFinanceiro.js        # Resumo, cashflow, contas a pagar/receber, DRE
-│   ├── useProdutos.js          # CRUD de produtos do estoque
+│   ├── useAuth.jsx             # Autenticação + logout automático
+│   ├── useIdleTimer.js         # Timer de inatividade
+│   ├── useFinanceiro.js        # Resumo, cashflow, contas DRE
+│   ├── useProdutos.js          # CRUD de produtos
 │   ├── useMovimentos.js        # Movimentações de estoque
-│   └── useVendas.js            # Lista de vendas + resumo do mês (RECEITA)
+│   ├── useVendas.js            # Lista de vendas + resumo do mês
+│   └── useRelatorios.js        # KPIs e visão geral para BI
 │
 ├── components/
 │   ├── layout/
-│   │   ├── Sidebar.jsx         # Navegação lateral colapsável (mobile: gaveta)
-│   │   └── Header.jsx          # Cabeçalho com data/hora ao vivo + toggle de menu
+│   │   ├── Sidebar.jsx         # Navegação lateral (mobile friendly)
+│   │   └── Header.jsx          # Cabeçalho com data/hora e controles
 │   └── ui/
-│       ├── Card.jsx            # Container base reutilizável
-│       ├── KPI.jsx             # Card de métrica com ícone e variação
-│       ├── Tag.jsx             # Badge de status colorido
-│       ├── Skeleton.jsx        # Loading states (SkeletonTable, SkeletonCard)
-│       ├── EmptyState.jsx      # Estado vazio padronizado
-│       ├── ErrorState.jsx      # Estado de erro com botão de retry
-│       └── ChartTooltip.jsx    # Tooltip personalizado para Recharts
+│       ├── Card.jsx            # Container base
+│       ├── KPI.jsx             # Card de métrica
+│       ├── Tag.jsx             # Badge de status
+│       ├── Skeleton.jsx        # Loading states
+│       └── ...
 │
 ├── modules/
-│   ├── auth/
-│   │   └── LoginPage.jsx       # Tela de login
-│   ├── dashboard/
-│   │   └── Dashboard.jsx       # KPIs, cashflow, alertas e atalhos
-│   ├── estoque/
-│   │   ├── Estoque.jsx          # Módulo principal (abas)
-│   │   ├── TabelaProdutos.jsx   # Listagem com filtros e CRUD
-│   │   ├── TabelaMovimentos.jsx # Registro de entradas/saídas
-│   │   ├── ModalProduto.jsx     # Cadastro de produtos
-│   │   └── ModalMovimentacao.jsx
-│   ├── financeiro/
-│   │   ├── Financeiro.jsx       # Módulo principal (abas)
-│   │   ├── Cashflow.jsx         # Gráfico de fluxo de caixa mensal
-│   │   ├── Lancamentos.jsx      # Histórico detalhado de entradas/saídas
-│   │   ├── ContasPagar.jsx      # Gestão de dívidas
-│   │   ├── ContasReceber.jsx    # Gestão de créditos
-│   │   ├── DRE.jsx              # Demonstrativo de Resultado
-│   │   ├── ModalLancamento.jsx  # Criação/edição de lançamentos
-│   │   └── ModalAnexos.jsx      # Gestão de comprovantes
-│   └── vendas/
-│       ├── Vendas.jsx           # Hub do módulo (abas)
-│       ├── NovaVenda.jsx        # PDV completo (Lançamento de venda)
-│       ├── HistoricoVendas.jsx  # Histórico detalhado
-│       └── RelatorioVendas.jsx  # Analíticos e performance
+│   ├── auth/                   # Tela de Login e recuperação
+│   ├── dashboard/              # Visão geral, atalhos e KPIs rápidos
+│   ├── estoque/                # Gestão de catálogo e movimentações
+│   ├── financeiro/             # Fluxo de caixa, Contas P/R e DRE
+│   ├── vendas/                 # PDV, Histórico e Checkout
+│   ├── clientes/               # Gestão de base, segmentação e histórico
+│   └── relatorios/             # BI: Visão Geral e analíticos do negócio
 │
-├── App.jsx                     # Roteamento, estado global de layout, idle logout
+├── App.jsx                     # Roteamento e Providers globais
 └── main.jsx
 ```
 
@@ -131,15 +119,20 @@ src/
 |---|---|---|
 | **Dashboard** | ✅ Ativo | KPIs consolidados, cashflow e alertas críticos |
 | **Estoque** | ✅ Ativo | Gestão de catálogo, estoque mínimo e CRUD |
-| **Financeiro** | ✅ Ativo | Fluxo de caixa, Contas Pagar/Receber, Lançamentos e DRE |
-| **Vendas** | ✅ Ativo | PDV completo: Nova Venda, Histórico e Relatórios Analíticos |
-| **Clientes** | 🔜 Em breve | — |
-| **Fiscal** | 🔜 Em breve | — |
-| **Relatórios** | 🔜 Em breve | — |
+| **Financeiro** | ✅ Ativo | Fluxos, Contas P/R, DRE e Conciliação |
+| **Vendas** | ✅ Ativo | PDV completo: Nova Venda, Histórico e Ticket Médio |
+| **Clientes** | ✅ Ativo | CRM: Cadastro, Segmentação e Histórico de Gasto |
+| **Relatórios** | ✅ Ativo | BI: Gráficos de performance, metas e evolução |
+| **Fiscal** | 🔜 Em breve | NF-e e obrigações fiscais |
 
 ---
 
 ## Funcionalidades de UX
+
+### Temas (Dark/Light Mode)
+- Suporte a temas **Claro e Escuro** com persistência em `localStorage`.
+- Detecção automática da preferência do sistema operacional.
+- Troca de tema instantânea via `ThemeContext` e `Styled Components`.
 
 ### Autenticação
 - Login com e-mail e senha via JWT
@@ -176,4 +169,4 @@ Card "Total do Mês" usa APENAS Lancamentos RECEITA para evitar dupla contagem.
 - **Fase 1** ✅ Fundação: auth, multi-tenancy, CI/CD
 - **Fase 2** ✅ Operacional: Estoque + Vendas + Financeiro
 - **Fase 3** 🚧 Fiscal & Financeiro avançado: NF-e, conciliação bancária
-- **Fase 4** 🔜 CRM & BI: fidelização, dashboards avançados
+- **Fase 4** ✅ CRM & BI: Clientes, Segmentação e BI
