@@ -120,7 +120,7 @@ export function Clientes() {
       <S.TableWrap>
         {loading ? (
           <S.EmptyState>Carregando clientes...</S.EmptyState>
-        ) : filteredClientes.length > 0 ? (
+        ) : filteredClientes.length > 0 ? (<>
           <S.Table>
             <thead>
               <tr>
@@ -158,7 +158,7 @@ export function Clientes() {
             </tbody>
           </S.Table>
           <Pagination {...pagination} />
-        ) : (
+        </>) : (
           <S.EmptyState>Nenhum cliente encontrado.</S.EmptyState>
         )}
       </S.TableWrap>
