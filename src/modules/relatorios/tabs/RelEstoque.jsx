@@ -15,6 +15,8 @@ import { SkeletonKPI }   from '../../../components/ui/Skeleton'
 import { Card }          from '../../../components/ui/Card'
 import { Tag }           from '../../../components/ui/Tag'
 import { ChartTooltip }  from '../../../components/ui/ChartTooltip'
+import { Pagination }    from '../../../components/ui/Pagination'
+import { usePagination } from '../../../hooks/usePagination'
 import { fmtBRL }        from '../../../utils/format'
 
 import {
@@ -157,6 +159,10 @@ export function RelEstoque({ period }) {
   const totalValor  = useMemo(() => prods.reduce((s, p) => s + (p.estoque ?? 0) * (p.custo ?? 0), 0), [prods])
   const countA      = abcApiData.filter(p => p.classe === 'A').length
   const valorA      = abcApiData.filter(p => p.classe === 'A').reduce((s, p) => s + p.receita, 0)
+
+  const abcPagination      = usePagination(abcApiData)
+  const rupturasPagination = usePagination(rupturas)
+  const deadStockPagination = usePagination(deadStock)
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -304,7 +310,7 @@ export function RelEstoque({ period }) {
                 </tr>
               </thead>
               <tbody>
-                {abcApiData.map(p => (
+                {abcPagination.paginatedItems.map(p => (
                   <Tr key={p.produtoId}>
                     <Td>
                       <Tag color={ABC_CONFIG[p.classe].color} bg={ABC_CONFIG[p.classe].bg}>
@@ -329,6 +335,7 @@ export function RelEstoque({ period }) {
                 ))}
               </tbody>
             </Table>
+            <Pagination {...abcPagination} />
           </TableWrap>
         )}
       </Card>
@@ -354,7 +361,7 @@ export function RelEstoque({ period }) {
                 </tr>
               </thead>
               <tbody>
-                {rupturas.map(p => {
+                {rupturasPagination.paginatedItems.map(p => {
                   const cfg = p.status === 'out'
                     ? { color: '#ff5b6b', bg: 'rgba(255,91,107,.12)', label: 'Zerado' }
                     : { color: '#f7c948', bg: 'rgba(247,201,72,.12)', label: 'Baixo'  }
@@ -375,11 +382,10 @@ export function RelEstoque({ period }) {
                 })}
               </tbody>
             </Table>
+            <Pagination {...rupturasPagination} />
           </TableWrap>
         </Card>
       )}
-
-      {/* Estoque morto */}
       {deadStock.length > 0 && (
         <Card style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: '20px 20px 0' }}>
@@ -400,7 +406,7 @@ export function RelEstoque({ period }) {
                 </tr>
               </thead>
               <tbody>
-                {deadStock.map(p => (
+                {deadStockPagination.paginatedItems.map(p => (
                   <Tr key={p.id}>
                     <Td>
                       <ProductName>{p.nome}</ProductName>
@@ -420,6 +426,7 @@ export function RelEstoque({ period }) {
                 ))}
               </tbody>
             </Table>
+            <Pagination {...deadStockPagination} />
           </TableWrap>
         </Card>
       )}

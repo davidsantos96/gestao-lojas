@@ -5,6 +5,8 @@ import { Card } from '../../components/ui/Card'
 import { Tag } from '../../components/ui/Tag'
 import { SkeletonTable } from '../../components/ui/Skeleton'
 import { ErrorState } from '../../components/ui/ErrorState'
+import { Pagination } from '../../components/ui/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 import { useVendas } from '../../hooks/useVendas'
 import { cancelarVenda, FORMAS_PAGAMENTO } from '../../services/vendasService'
 import { ThemeContext } from '../../contexts/ThemeContext'
@@ -28,11 +30,12 @@ export function HistoricoVendas() {
     cancelada: { color: theme.colors.red,     bg: `${theme.colors.red}1E`,     label: 'Cancelada' },
   }
 
-  const { vendas, pagination, loading, error, refetch } = useVendas(
+  const { vendas, pagination: apiPagination, loading, error, refetch } = useVendas(
     Object.fromEntries(Object.entries(filtros).filter(([, v]) => v))
   )
 
-  const total = pagination?.total ?? 0
+  const total = apiPagination?.total ?? 0
+  const pagination = usePagination(vendas)
 
   const handleCancelar = async (id) => {
     if (confirmando === id) {
@@ -118,7 +121,7 @@ export function HistoricoVendas() {
               </tr>
             </thead>
             <tbody>
-              {vendas.map((v, i) => {
+              {pagination.paginatedItems.map((v, i) => {
                 const cfg     = STATUS_CFG[v.status] ?? STATUS_CFG.concluida
                 const fpLabel = FORMAS_PAGAMENTO.find(f => f.value === v.forma_pagamento)?.label ?? v.forma_pagamento
                 const data    = new Date(v.criadoEm ?? v.criado_em).toLocaleDateString('pt-BR')
@@ -223,6 +226,7 @@ export function HistoricoVendas() {
               })}
             </tbody>
           </StyledTable>
+          <Pagination {...pagination} />
         </TableCard>
       )}
     </Container>

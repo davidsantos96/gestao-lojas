@@ -7,6 +7,8 @@ import { Tag } from '../../components/ui/Tag'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { SkeletonTable } from '../../components/ui/Skeleton'
 import { ErrorState } from '../../components/ui/ErrorState'
+import { Pagination } from '../../components/ui/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 import { ThemeContext } from '../../contexts/ThemeContext'
 import {
   TableWrap, StyledTable, Th, Tr, Td, ColorWrap, ColorBadge, ColorName,
@@ -25,6 +27,7 @@ const COLUNAS = ['Código', 'Produto', 'Categoria', 'Cor', 'Estoque', 'Mínimo',
 
 export function TabelaProdutos({ produtos, loading, error, onRefetch, onEditar, onRemover }) {
   const { theme } = useContext(ThemeContext)
+  const pagination = usePagination(produtos ?? [])
 
   if (loading) return <Card><SkeletonTable rows={6} cols={9} /></Card>
   if (error)   return <Card><ErrorState error={error} onRetry={onRefetch} /></Card>
@@ -50,7 +53,7 @@ export function TabelaProdutos({ produtos, loading, error, onRefetch, onEditar, 
           </tr>
         </thead>
         <tbody>
-          {produtos.map((p, i) => {
+          {pagination.paginatedItems.map((p, i) => {
             const cfg = STATUS_ESTOQUE[p.status] ?? STATUS_ESTOQUE.ok
             // Override with theme colors
             const statusColor = cfg.color === '#00d9a8' ? theme.colors.accent 
@@ -104,6 +107,7 @@ export function TabelaProdutos({ produtos, loading, error, onRefetch, onEditar, 
           })}
         </tbody>
       </StyledTable>
+      <Pagination {...pagination} />
     </TableWrap>
   )
 }

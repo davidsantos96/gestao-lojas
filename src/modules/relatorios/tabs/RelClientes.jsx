@@ -5,6 +5,8 @@ import { KPI } from '../../../components/ui/KPI'
 import { Tag } from '../../../components/ui/Tag'
 import { ThemeContext } from '../../../contexts/ThemeContext'
 import { useRfm } from '../../../hooks/useRelatorios'
+import { Pagination } from '../../../components/ui/Pagination'
+import { usePagination } from '../../../hooks/usePagination'
 import { fmtBRL } from '../../../utils/format'
 import {
   KpiGrid, ContentGrid, ChartCard, CardTitle, TableCard,
@@ -94,6 +96,8 @@ export function RelClientes({ period }) {
     if (sortKey === key) setSortDir(d => d === 'desc' ? 'asc' : 'desc')
     else { setSortKey(key); setSortDir('desc') }
   }
+
+  const rfmPagination = usePagination(sorted)
 
   const arrow = (key) => (
     <SortArrow $active={sortKey === key}>
@@ -232,12 +236,13 @@ export function RelClientes({ period }) {
               </tr>
             </thead>
             <tbody>
-              {sorted.map((c, i) => {
+              {rfmPagination.paginatedItems.map((c, i) => {
+                const globalIdx = (rfmPagination.page - 1) * rfmPagination.pageSize + i
                 const cfg = SEG_CONFIG[c.segment] || SEG_CONFIG['Potencial']
                 return (
                   <tr key={c.id}>
                     <Td>
-                      <span style={{ color: theme.colors.muted, fontSize: 11, marginRight: 8 }}>{i + 1}</span>
+                      <span style={{ color: theme.colors.muted, fontSize: 11, marginRight: 8 }}>{globalIdx + 1}</span>
                       {c.nome}
                     </Td>
                     <Td>
@@ -268,6 +273,7 @@ export function RelClientes({ period }) {
               })}
             </tbody>
           </Table>
+          <Pagination {...rfmPagination} />
         </TableWrap>
       </TableCard>
     </>

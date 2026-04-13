@@ -11,6 +11,8 @@ import { KPI } from '../../../components/ui/KPI'
 import { SkeletonKPI } from '../../../components/ui/Skeleton'
 import { Card } from '../../../components/ui/Card'
 import { ChartTooltip } from '../../../components/ui/ChartTooltip'
+import { Pagination } from '../../../components/ui/Pagination'
+import { usePagination } from '../../../hooks/usePagination'
 import { fmtBRL, fmtPct } from '../../../utils/format'
 import {
   KpiGrid, SectionGrid, SectionTitle, SubTitle, LegendRow, LegendDot,
@@ -57,7 +59,6 @@ export function RelVendas({ period }) {
 
   const [sortBy,  setSortBy]  = useState('receita')
   const [sortAsc, setSortAsc] = useState(false)
-
   // ── Dados ─────────────────────────────────────────────────────────────────
   const { data: cashflowRaw, loading } = useCashflow(7)
   const cashflow = cashflowRaw?.length ? cashflowRaw : MOCK_CASHFLOW
@@ -96,6 +97,8 @@ export function RelVendas({ period }) {
     )
     return sorted
   }, [sortBy, sortAsc])
+
+  const rankingPagination = usePagination(ranking)
 
   function handleSort(col) {
     if (sortBy === col) setSortAsc(v => !v)
@@ -273,10 +276,11 @@ export function RelVendas({ period }) {
               </tr>
             </thead>
             <tbody>
-              {ranking.map((p, i) => (
+              {rankingPagination.paginatedItems.map((p, i) => {
+                return (
                 <Tr key={p.id}>
                   <Td>
-                    <RankBadge $pos={i + 1}>{i + 1}</RankBadge>
+                    <RankBadge $pos={globalIdx + 1}>{globalIdx + 1}</RankBadge>
                   </Td>
                   <Td>
                     <ProductName>{p.nome}</ProductName>
@@ -294,9 +298,11 @@ export function RelVendas({ period }) {
                     </MargemBar>
                   </Td>
                 </Tr>
-              ))}
+                )
+              })}
             </tbody>
           </Table>
+          <Pagination {...rankingPagination} />
         </TableWrap>
       </Card>
     </div>

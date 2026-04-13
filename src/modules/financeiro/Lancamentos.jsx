@@ -6,6 +6,8 @@ import { Card } from '../../components/ui/Card'
 import { Tag } from '../../components/ui/Tag'
 import { SkeletonTable } from '../../components/ui/Skeleton'
 import { ErrorState } from '../../components/ui/ErrorState'
+import { Pagination } from '../../components/ui/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 import {
   TableWrap, StyledTable, Th, Tr, Td, SectionWrap, SectionHeader, DeleteBtn, IconBtnWrap, IconBtn
 } from './TabelasFinanceiroStyles'
@@ -13,6 +15,7 @@ import {
 export function Lancamentos({ titulo, lancamentos = [], total = 0, loading, error, onRefetch, onEditar, onRemover }) {
   const [confirmando, setConfirmando] = useState(null)
   const { theme } = useContext(ThemeContext)
+  const pagination = usePagination(lancamentos)
 
   const TIPO_CFG = {
     RECEITA: { color: theme.colors.accent, bg: 'rgba(0,217,168,.12)', label: 'Receita' },
@@ -54,7 +57,7 @@ export function Lancamentos({ titulo, lancamentos = [], total = 0, loading, erro
               </tr>
             </thead>
             <tbody>
-              {lancamentos.map((l, i) => {
+              {pagination.paginatedItems.map((l, i) => {
                 const cfg  = TIPO_CFG[l.tipo] ?? TIPO_CFG.DESPESA
                 const data = l.data 
                   ? (l.data.includes('/') ? l.data : l.data.split('T')[0].split('-').reverse().join('/'))
@@ -96,6 +99,7 @@ export function Lancamentos({ titulo, lancamentos = [], total = 0, loading, erro
               })}
             </tbody>
           </StyledTable>
+          <Pagination {...pagination} />
         </TableWrap>
       </Card>
     </SectionWrap>

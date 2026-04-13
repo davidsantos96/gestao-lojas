@@ -5,11 +5,14 @@ import { Tag } from '../../components/ui/Tag'
 import { SkeletonTable } from '../../components/ui/Skeleton'
 import { ErrorState } from '../../components/ui/ErrorState'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { Pagination } from '../../components/ui/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 import { ThemeContext } from '../../contexts/ThemeContext'
 import { TableWrap, StyledTable, Th, Tr, Td } from './TabelaMovimentosStyles'
 
 export function TabelaMovimentos({ movimentos, loading, error, onRefetch }) {
   const { theme } = useContext(ThemeContext)
+  const pagination = usePagination(movimentos ?? [])
 
   const TIPO_CONFIG = {
     entrada: { label: 'Entrada', color: theme.colors.accent, bg: `${theme.colors.accent}1A` },
@@ -36,7 +39,7 @@ export function TabelaMovimentos({ movimentos, loading, error, onRefetch }) {
           </tr>
         </thead>
         <tbody>
-          {movimentos.map((m, i) => {
+          {pagination.paginatedItems.map((m, i) => {
             const cfg = TIPO_CONFIG[m.tipo] ?? TIPO_CONFIG.ajuste
             return (
               <Tr key={m.id} $isEven={i % 2 === 0}>
@@ -53,6 +56,7 @@ export function TabelaMovimentos({ movimentos, loading, error, onRefetch }) {
           })}
         </tbody>
       </StyledTable>
+      <Pagination {...pagination} />
     </TableWrap>
   )
 }

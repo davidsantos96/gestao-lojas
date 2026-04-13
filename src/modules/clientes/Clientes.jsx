@@ -4,6 +4,8 @@ import * as S from './ClientesStyles'
 import { CadastroCliente } from './CadastroCliente'
 import { FichaCliente } from './FichaCliente'
 import { KPI } from '../../components/ui/KPI'
+import { Pagination } from '../../components/ui/Pagination'
+import { usePagination } from '../../hooks/usePagination'
 import { Users, Star, UserX, Search, PlusCircle } from 'lucide-react'
 import { fmtBRL } from '../../utils/format'
 
@@ -31,6 +33,8 @@ export function Clientes() {
     const matchesFilter = filter === 'all' || c.segmento.toLowerCase() === filter.toLowerCase()
     return matchesSearch && matchesFilter
   })
+
+  const pagination = usePagination(filteredClientes)
 
   const kpis = {
     total: clientes.length,
@@ -129,7 +133,7 @@ export function Clientes() {
               </tr>
             </thead>
             <tbody>
-              {filteredClientes.map(cliente => (
+              {pagination.paginatedItems.map(cliente => (
                 <tr key={cliente.id} onClick={() => handleEdit(cliente)}>
                   <td>{cliente.nome}</td>
                   <td>{cliente.email}</td>
@@ -153,6 +157,7 @@ export function Clientes() {
               ))}
             </tbody>
           </S.Table>
+          <Pagination {...pagination} />
         ) : (
           <S.EmptyState>Nenhum cliente encontrado.</S.EmptyState>
         )}
