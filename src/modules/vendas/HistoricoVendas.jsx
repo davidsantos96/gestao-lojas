@@ -8,6 +8,7 @@ import { ErrorState } from '../../components/ui/ErrorState'
 import { Pagination } from '../../components/ui/Pagination'
 import { usePagination } from '../../hooks/usePagination'
 import { useVendas } from '../../hooks/useVendas'
+import { useProdutos } from '../../hooks/useProdutos'
 import { cancelarVenda, FORMAS_PAGAMENTO } from '../../services/vendasService'
 import { ThemeContext } from '../../contexts/ThemeContext'
 import {
@@ -24,6 +25,7 @@ export function HistoricoVendas() {
   const [confirmando, setConfirmando] = useState(null)
 
   const { theme } = useContext(ThemeContext)
+  const { produtos } = useProdutos()
 
   const STATUS_CFG = {
     concluida: { color: theme.colors.accent,  bg: `${theme.colors.accent}1E`,  label: 'Concluída' },
@@ -193,17 +195,23 @@ export function HistoricoVendas() {
                                 </tr>
                               </thead>
                               <tbody>
-                                {(detalhe.itens ?? []).map(item => (
-                                  <tr key={item.id}>
-                                    <DetailTd $color={theme.colors.text} $weight={500}>{item.produto_nome || `Produto (ID: ${item.produto_id})`}</DetailTd>
-                                    <DetailTd $fontSize="11px" $mono>{item.produto_sku || 'N/A'}</DetailTd>
-                                    <DetailTd $align="right">{item.quantidade}</DetailTd>
-                                    <DetailTd $align="right">{fmtBRL(item.preco_unitario)}</DetailTd>
-                                    <DetailTd $align="right" $fontSize="13px" $weight={700} $color={theme.colors.accent}>
-                                      {fmtBRL(item.subtotal)}
-                                    </DetailTd>
-                                  </tr>
-                                ))}
+                                {(detalhe.itens ?? []).map(item => {
+                                  const prod = produtos.find(p => p.id === item.produto_id)
+                                  const nomeExibicao = item.produto_nome || prod?.nome || `Produto (ID: ${item.produto_id})`
+                                  const skuExibicao = item.produto_sku || prod?.sku || 'N/A'
+                                  
+                                  return (
+                                    <tr key={item.id}>
+                                      <DetailTd $color={theme.colors.text} $weight={500}>{nomeExibicao}</DetailTd>
+                                      <DetailTd $fontSize="11px" $mono>{skuExibicao}</DetailTd>
+                                      <DetailTd $align="right">{item.quantidade}</DetailTd>
+                                      <DetailTd $align="right">{fmtBRL(item.preco_unitario)}</DetailTd>
+                                      <DetailTd $align="right" $fontSize="13px" $weight={700} $color={theme.colors.accent}>
+                                        {fmtBRL(item.subtotal)}
+                                      </DetailTd>
+                                    </tr>
+                                  )
+                                })}
                               </tbody>
                             </DetailTable>
 
