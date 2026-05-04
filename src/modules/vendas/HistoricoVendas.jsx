@@ -195,8 +195,8 @@ export function HistoricoVendas() {
                               <tbody>
                                 {(detalhe.itens ?? []).map(item => (
                                   <tr key={item.id}>
-                                    <DetailTd $color={theme.colors.text} $weight={500}>{item.produto_nome}</DetailTd>
-                                    <DetailTd $fontSize="11px" $mono>{item.produto_sku}</DetailTd>
+                                    <DetailTd $color={theme.colors.text} $weight={500}>{item.produto_nome || `Produto (ID: ${item.produto_id})`}</DetailTd>
+                                    <DetailTd $fontSize="11px" $mono>{item.produto_sku || 'N/A'}</DetailTd>
                                     <DetailTd $align="right">{item.quantidade}</DetailTd>
                                     <DetailTd $align="right">{fmtBRL(item.preco_unitario)}</DetailTd>
                                     <DetailTd $align="right" $fontSize="13px" $weight={700} $color={theme.colors.accent}>

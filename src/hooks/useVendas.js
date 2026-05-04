@@ -121,7 +121,7 @@ export function useCarrinho() {
         forma_pagamento: formaPagamento,
         parcelas:        formaPagamento === 'CARTAO_CREDITO' ? parcelas : 1,
         desconto:        desconto || 0,
-        itens:           itens.map(i => ({ produto_id: i.produto_id, quantidade: i.quantidade, preco_unitario: i.preco_unitario, desconto: i.desconto ?? 0 })),
+        itens:           itens.map(i => ({ produto_id: i.produto_id, produto_nome: i.nome, produto_sku: i.sku, quantidade: i.quantidade, preco_unitario: i.preco_unitario, desconto: i.desconto ?? 0 })),
       })
       limpar()
       return venda
